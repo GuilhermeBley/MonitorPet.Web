@@ -1,0 +1,25 @@
+﻿@foreach (var erro in Errors)
+{
+    <div class="alert alert-danger" role="alert">
+        <div class="row align-items-center h-100">
+            <div class="col-10">
+                <span class="text-start align-middle">@erro</span>
+            </div>
+            <div class="col-2 text-end align-content-end">
+                <button type="button" class="btn" @onclick="(()=>RemoveError(erro))">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public List<string> Errors { get; set; } = new();
+
+    private void RemoveError(string errorDesc)
+    {
+        Errors.Remove(errorDesc);
+    }
+}

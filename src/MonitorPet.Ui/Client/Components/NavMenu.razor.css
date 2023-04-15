@@ -1,0 +1,21 @@
+nav {
+    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #004381 30%) !important;
+}
+
+.navbar-toggler {
+    border: 0;
+}
+
+a:hover {
+    opacity: 10;
+}
+
+.navbar-brand {
+    font-size: x-large;
+}
+
+.nav-link {
+    font-size: medium;
+    padding-left: 1rem !important;
+    min-width: 4rem;
+}

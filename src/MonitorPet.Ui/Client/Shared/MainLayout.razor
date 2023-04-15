@@ -1,0 +1,44 @@
+﻿@inherits LayoutComponentBase
+
+@inject NavigationManager NavManager
+
+<AuthorizeView>
+    <Authorizing>
+        <LoadComponent></LoadComponent>
+    </Authorizing>
+    <Authorized>
+        <div class="page">
+            
+            <NavMenu />
+
+            <main class="@SideBarHide">
+                <article class="content px-4">
+                    @Body
+                </article>
+            </main>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="nav-item px-3">
+            Não autorizado. Redirecionando para Login...
+        </div>
+        @{
+            GoToLogin(); 
+        }
+    </NotAuthorized>
+</AuthorizeView>
+
+@code{
+    private bool IsSideBarHide = false;
+    private string? SideBarHide => IsSideBarHide ? null : "sidebar";
+
+    private void GoToLogin()
+    {
+        NavManager.NavigateTo("/Login");
+    }
+
+    private void OnToggleSideBar(bool isSideBarHide)
+    {
+        IsSideBarHide = isSideBarHide;
+    }
+}

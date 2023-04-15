@@ -1,0 +1,89 @@
+﻿@layout CenterLayout
+
+@page "/ConfirmAccount/{Token}/Confirm"
+@using MonitorPet.Ui.Shared.Model.Exceptions
+@using MonitorPet.Ui.Shared.Model.User
+
+@inject HttpClient _client
+@inject Services.LocalStorageService _localStorage
+@inject Services.JwtTokenService _tokenService
+@inject NavigationManager _navigation
+
+<ErrorComponent Errors="Errors"></ErrorComponent>
+
+
+<div class="card-body">
+    <div class="card shadow-sm p-3">
+        <h3 class="text-center">Confirmação de conta</h3>
+
+        <p>Realizando confirmação de conta. Aguarde.</p>
+    </div>
+</div>
+
+@code {
+    private List<string> Errors { get; } = new();
+
+    [Parameter]
+    public string Token { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var tokenInfo = _tokenService.GetTokenInfo(Token);
+
+        if (tokenInfo.IsExpired())
+        {
+            Errors.Add("Token já expirado.");
+            return;
+        }
+
+        var email = TryGetEmailFromCurrentToken();
+
+        if (email is null)
+        {
+            Errors.Add("Token inválido");
+            return;
+        }
+
+        var postObj = new ConfirmEmailViewModel { Email = email };
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
+
+        using HttpRequestMessage message = new(HttpMethod.Post, $"api/login/confirmaccount");
+
+        message.Content = JsonContent.Create(postObj);
+
+        message.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
+
+        using var responseConfirmAccount = await _client.SendAsync(message);
+
+        if (!responseConfirmAccount.IsSuccessStatusCode)
+        {
+            var responseErrors = await responseConfirmAccount.Content.ReadFromJsonAsync<IEnumerable<ErrorViewModel>>();
+
+            if (responseErrors is null ||
+                !responseErrors.Any())
+                Errors.Add("Falha ao criar usuário");
+
+            if (responseErrors is not null)
+                Errors.AddRange(responseErrors.Select(e => e.Message));
+
+            return;
+        }
+
+        await _localStorage.SetItem(Services.AuthenticationStateService.DEFAUL_LOCAL_STORAGE, Token);
+        _navigation.NavigateTo("/", true);
+    }
+
+    private string? TryGetEmailFromCurrentToken()
+    {
+        var info = _tokenService.GetTokenInfo(Token);
+
+        if (info is null)
+            return null;
+
+        var emailFoundClaims = info.Claims.FirstOrDefault(c => c.Type.ToUpper() == "EMAILADDRESS")?.Value;
+
+        return emailFoundClaims;
+    }
+}

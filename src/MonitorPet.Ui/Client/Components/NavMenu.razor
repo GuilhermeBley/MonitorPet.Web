@@ -1,0 +1,73 @@
+﻿@inject NavigationManager _navigation
+@inject Services.LocalStorageService _localStorage
+@inject AuthenticationStateProvider _authState
+
+<nav class="navbar fixed-top navbar-expand-md nav-top-h navbar-dark ">
+    <!-- button -->
+    <a class="navbar-toggler px-2" data-toggle="collapse" data-target="#navPages" aria-controls="navPages" aria-expanded="false">
+        <span class="navbar-toggler-icon"></span>
+    </a>
+    <a class="navbar-brand px-2" href="/" ><i class="fa-solid fa-shield-dog"></i> Monitor Pet</a>
+
+    <!-- pages -->
+    <div class="collapse navbar-collapse" id="navPages">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="/">
+                    <i class="fa-solid fa-paw"></i> Pets
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link disabled" href="#" @onclick:preventDefault>
+                    <i class="fa-solid fa-bowl-food"></i> Agendamentos
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link disabled" href="#" @onclick:preventDefault>
+                    <i class="fa-solid fa-square-poll-horizontal"></i> Relatórios
+                </a>
+            </li>
+        </ul>
+
+        <!-- end user opt -->
+        <div class="d-flex ms-auto">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle px-2" id="navBarUserOpt"
+                       role="button" data-toggle="dropdown" aria-haspoup="true"
+                       aria-expanded="false" @onclick:preventDefault>
+                        <span id="emailData">@Email.MaxLenght(20) </span>
+                        <i class="bi bi-person-circle"></i>
+                    </a>
+                    <div class="dropdown-menu" aria-labelledy="navBarUserOpt">
+                        <a href="/ManageUser" class="dropdown-item">
+                            <i class="fa-solid fa-user-gear"></i> Configurações
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item" @onclick="(async ()=> await LogOut())" @onclick:preventDefault>Sair</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+@code {
+    private string Email { get; set; } = "email@email.com";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state =
+            await _authState.GetAuthenticationStateAsync();
+        var email = state.User.Claims.FirstOrDefault(c => string.Equals(c.Type, "emailaddress", StringComparison.OrdinalIgnoreCase))?.Value;
+
+        if (!string.IsNullOrWhiteSpace(email))
+            Email = email;
+    }
+
+    private async Task LogOut()
+    {
+        await _localStorage.RemoveItem(Services.AuthenticationStateService.DEFAUL_LOCAL_STORAGE);
+        _navigation.NavigateTo("/", true);
+    }
+}

@@ -1,0 +1,240 @@
+﻿@page "/ManageUser"
+@using MonitorPet.Ui.Client.Services
+@using MonitorPet.Ui.Shared.Model.User
+
+@inject HttpClient _client
+@inject UserInfoService _userInfo
+
+<div class="container-md">
+
+    <ErrorComponent Errors="Errors"></ErrorComponent>
+    <SuccessComponent Successes="Suc"></SuccessComponent>
+    <InformationComponent Infos="Infos"></InformationComponent>
+
+    <h1 class="text-primary">Editar Perfil</h1>
+    <hr>
+    <div class="row">
+        <div class="col-md">
+
+            <h3 class="h3 mb-3">Informações pessoais</h3>
+
+            <EditForm Model="UserModel" OnValidSubmit="(async ()=> await UpdateUser())">
+                <DataAnnotationsValidator />
+
+                <div class="form-group mb-2">
+                    <label class="col-lg-3 control-label">Nome:</label>
+                    <div class="col-lg-8">
+                        <InputText class="form-control" type="text" @bind-Value="UserModel.Name" />
+                        <ValidationMessage For="(() => UserModel.Name)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="form-group mb-2">
+                    <label class="col-lg-3 control-label">Apelido:</label>
+                    <div class="col-lg-8">
+                        <InputText class="form-control" type="text" @bind-Value="UserModel.NickName" />
+                        <ValidationMessage For="(() => UserModel.NickName)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="form-group mb-2">
+                    <label class="col-lg-3 control-label">E-mail:</label>
+                    <div class="col-lg-8">
+                        <InputText class="form-control" type="text" @bind-Value="UserModel.Email" />
+                        <ValidationMessage For="(() => UserModel.Email)"></ValidationMessage>
+                    </div>
+                </div>
+
+                <div class="form-group mt-2 text-start">
+                    <button type="submit" class="btn btn-outline-primary">Salvar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+
+    <hr />
+    <div class="row">
+        <div class="col-md">
+
+            <h3 class="h3 mb-3">Atualizar senha</h3>
+
+            <EditForm Model="UpdatePassword" OnValidSubmit="(async ()=> await UpdateUserPassword())">
+                <DataAnnotationsValidator />
+
+                <div class="form-group mb-2">
+                    <label class="col-lg-3 control-label">Senha antiga:</label>
+                    <div class="col-lg-8">
+                        <InputText type="password" class="form-control" @bind-Value="UpdatePassword.OldPassword" />
+                        <ValidationMessage For="(() => UpdatePassword.OldPassword)"></ValidationMessage>
+                    </div>
+                </div>
+
+                <div class="form-group mb-2">
+                    <label class="col-lg-3 control-label">Nova senha:</label>
+                    <div class="col-lg-8">
+                        <InputText type="password" class="form-control" @bind-Value="UpdatePassword.NewPassword" />
+                        <ValidationMessage For="(() => UpdatePassword.NewPassword)"></ValidationMessage>
+                    </div>
+                </div>
+                <div class="form-group mb-2">
+                    <label class="col-lg-3 control-label">Confirmar senha:</label>
+                    <div class="col-lg-8">
+                        <InputText type="password" class="form-control" @bind-Value="UpdatePassword.ConfirmPassword" />
+                        <ValidationMessage For="(() => UpdatePassword.ConfirmPassword)"></ValidationMessage>
+                    </div>
+                </div>
+                
+                <div class="form-group mt-2 mb-5 text-start">
+                    <button type="submit" class="btn btn-outline-primary">Alterar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<string> Errors { get; } = new();
+    private List<string> Infos { get; } = new();
+    private List<string> Suc { get; } = new();
+
+    private UpdateUserViewModel UserModel { get; set; } = new();
+    private UpdateUserViewModel? OldUserModel { get; set; }
+
+    private UpdatePasswordViewModel UpdatePassword { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var currUser = await TryGetUserModel();
+
+        if (currUser is null)
+        {
+            Errors.Add("Falha ao coletar usuário.");
+            return;
+        }
+
+        OldUserModel = new()
+            {
+                Email = currUser.Email,
+                Name = currUser.Name,
+                NickName = currUser.NickName
+            };
+
+        UserModel.Email = currUser.Email;
+        UserModel.Name = currUser.Name;
+        UserModel.NickName = currUser.NickName;
+    }
+
+    private async Task<QueryUserViewModel?> TryGetUserModel()
+    {
+        const string QUERY = "api/user/{id}";
+
+        try
+        {
+            var userInfo = await _userInfo.GetUserInfo();
+
+            if (userInfo is null)
+                return null;
+
+            using var responseQuery = await _client.GetAsync(
+                QUERY.Replace("{id}", userInfo.Id.ToString()));
+
+            if (!responseQuery.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await responseQuery.Content.ReadFromJsonAsync<QueryUserViewModel>();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task UpdateUser()
+    {
+        const string PATCH = "api/user";
+
+        ClearAlerts();
+
+        if (IsOldUpdateUserEquals())
+        {
+            Infos.Add("Nenhum dado alterado.");
+            return;
+        }
+
+        try
+        {
+            using var contentJson = JsonContent.Create(UserModel);
+
+            using var responsePatch = await _client.PatchAsync(PATCH, contentJson);
+
+            var errors = await responsePatch.TryGetErrors();
+
+            if (errors.ContainsError)
+            {
+                Errors.AddRange(errors.ErrorsMessages);
+                return;
+            }
+
+            Suc.Add("Informações do usuário atualizadas com sucesso!");
+
+            OldUserModel = new()
+            {
+                Email = UserModel.Email,
+                Name = UserModel.Name,
+                NickName = UserModel.NickName
+            };
+        }
+        catch
+        {
+            Errors.Add("Falha ao realizar atualização.");
+        }
+    }
+
+    private async Task UpdateUserPassword()
+    {
+        ClearAlerts();
+
+        const string PATCH = "api/user/password";
+
+        try
+        {
+            using var contentJson = JsonContent.Create(UpdatePassword);
+
+            using var responsePatch = await _client.PatchAsync(PATCH, contentJson);
+
+            var errors = await responsePatch.TryGetErrors();
+
+            if (errors.ContainsError)
+            {
+                Errors.AddRange(errors.ErrorsMessages);
+                return;
+            }
+
+            Suc.Add("Senha atualizada com sucesso!");
+        }
+        catch
+        {
+            Errors.Add("Falha ao atualizar senha.");
+        }
+    }
+
+    private bool IsOldUpdateUserEquals()
+    {
+        if (OldUserModel is null)
+            return true;
+
+        if (UserModel.Email == OldUserModel.Email &&
+            UserModel.Name == OldUserModel.Name &&
+            UserModel.NickName == OldUserModel.NickName)
+            return true;
+
+        return false;
+    }
+
+    private void ClearAlerts()
+    {
+        Errors.Clear();
+        Suc.Clear();
+        Infos.Clear();
+    }
+}

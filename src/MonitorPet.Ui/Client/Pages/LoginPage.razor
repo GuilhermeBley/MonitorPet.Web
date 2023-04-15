@@ -1,0 +1,96 @@
+﻿@layout CenterLayout
+
+@page "/Login"
+@using MonitorPet.Ui.Shared.Model.Exceptions
+@using MonitorPet.Ui.Shared.Model.User
+
+@inject HttpClient _client
+@inject Services.LocalStorageService _localStorage
+@inject NavigationManager _navigation
+
+<ErrorComponent Errors="Errors"></ErrorComponent>
+
+@if (HaveToConfirmEmail)
+{
+    <ConfirmEmailComponent />
+}
+
+
+<div class="card-body">
+    <div class="card shadow-sm p-3">
+        <h3 class="text-center h3">Login</h3>
+
+
+        <EditForm Model="LoginModel" OnValidSubmit="@(async () => await Login())">
+            <DataAnnotationsValidator />
+            <div class="form-outline mb-4">
+                <label class="form-label" for="emailInput">Email</label>
+                <InputText type="email" id="emailInput" class="form-control" @bind-Value="LoginModel.Login" />
+                <ValidationMessage For="(()=>LoginModel.Login)"></ValidationMessage>
+            </div>
+
+            <div class="form-outline mb-4">
+                <label class="form-label" for="passwordInput">Senha</label>
+                <InputText type="password" id="passwordInput" class="form-control" @bind-Value="LoginModel.Password" />
+                <ValidationMessage For="(() => LoginModel.Password)"></ValidationMessage>
+            </div>
+
+            <div class="row mb-4">
+
+                <div class="col">
+                    <!-- Simple link -->
+                    <a href="/ForgotPassword">Esqueceu a senha?</a>
+                </div>
+            </div>
+
+            <!-- Submit button -->
+            <button type="submit" class="btn btn-primary btn-block mb-4">Login</button>
+
+            <div class="text-center">
+                <p>Não está cadastrado? <a href="/CreateUser">Registre-se</a></p>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private bool HaveToConfirmEmail { get; set; } = false;
+    private List<string> Errors { get; } = new();
+    private LoginUserViewModel LoginModel { get; set; } = new();
+
+    private async Task Login()
+    {
+        Errors.Clear();
+
+        using var postLogin = await _client.PostAsJsonAsync("/api/Login", LoginModel);
+
+        if (postLogin.StatusCode == System.Net.HttpStatusCode.Locked)
+        {
+            HaveToConfirmEmail = true;
+            return;
+        }
+
+        if (!postLogin.IsSuccessStatusCode)
+        {
+            var errors =
+                await postLogin.Content.ReadFromJsonAsync<IEnumerable<ErrorViewModel>>();
+
+            if (errors is not null)
+                Errors.AddRange(errors.Select(e => e.Message));
+            return;
+        }
+
+        var resultLogin = await postLogin.Content.ReadFromJsonAsync<ResultAccessAccountViewModel>();
+
+        if (resultLogin is null ||
+            resultLogin.Token is null)
+        {
+            Errors.Add("Falha em Login. Tente novamente.");
+            return;
+        }
+
+        await _localStorage.SetItem(Services.AuthenticationStateService.DEFAUL_LOCAL_STORAGE, resultLogin.Token);
+
+        _navigation.NavigateTo("/", true);
+    }
+}

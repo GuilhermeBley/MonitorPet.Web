@@ -1,0 +1,26 @@
+﻿@foreach (var info in Infos)
+{
+    <div class="alert alert-info" role="alert">
+        <div class="row align-items-center h-100">
+            <div class="col-10">
+                <span class="text-start align-middle">@info</span>
+            </div>
+            <div class="col-2 text-end align-content-end">
+                <button type="button" class="btn" @onclick="(()=>RemoveMessage(info))">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public List<string> Infos { get; set; } = new();
+    
+
+    private void RemoveMessage(string message)
+    {
+        Infos.Remove(message);
+    }
+}

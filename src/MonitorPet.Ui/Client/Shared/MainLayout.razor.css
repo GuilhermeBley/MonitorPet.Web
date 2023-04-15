@@ -1,0 +1,15 @@
+.page {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    margin-top: 62px;
+}
+
+@media (max-widht:800px) {
+    .sidebar {
+        margin-left: 160px;
+    }
+}

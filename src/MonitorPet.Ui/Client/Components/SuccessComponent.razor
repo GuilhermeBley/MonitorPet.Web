@@ -1,0 +1,25 @@
+﻿@foreach (var success in Successes)
+{
+    <div class="alert alert-success" role="alert">
+        <div class="row align-items-center h-100">
+            <div class="col-10">
+                <span class="text-start align-middle">@success</span>
+            </div>
+            <div class="col-2 text-end align-content-end">
+                <button type="button" class="btn" @onclick="(()=>RemoveMessage(success))">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public List<string> Successes { get; set; } = new();
+
+    private void RemoveMessage(string message)
+    {
+        Successes.Remove(message);
+    }
+}

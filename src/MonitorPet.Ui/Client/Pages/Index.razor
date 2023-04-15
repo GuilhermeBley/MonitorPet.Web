@@ -1,0 +1,83 @@
+﻿@page "/"
+@using MonitorPet.Ui.Shared.Model.Dosador
+
+@inject HttpClient _client
+
+<PageTitle>Dosadores</PageTitle>
+
+<div class="container-md mt-3">
+    <div class="row text-end">
+        <div>
+            <button type="button" class="btn btn-outline-primary">
+                <i class="bi bi-plus-circle-fill"></i>
+                Adicionar dosadores
+            </button>
+        </div>
+    </div>
+    <hr />
+    <div class="row text-center">
+
+        <ErrorComponent Errors="Errors"></ErrorComponent>
+
+        @if (!Dosadores.Any() && LoadDosadores == StateMessage.Sent)
+        {
+            <p>Nenhum dosador cadastrado :(</p>
+        }
+
+        @if (LoadDosadores == StateMessage.Sending)
+        {
+            <LoadComponent></LoadComponent>
+        }
+
+        @foreach (var dosador in Dosadores)
+        {
+            <div class="col-lg-4 mt-3">
+                <img class="rounded-circle" src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" alt="Generic placeholder image" width="140" height="140">
+                <p><span class="fs-3">@dosador.Nome </span><a><i class="bi bi-three-dots-vertical"></i></a></p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<string> Errors { get; } = new();
+    private IEnumerable<DosadorJoinUsuarioDosadorViewModel> Dosadores { get; set; } =
+        Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+    private StateMessage LoadDosadores { get; set; } = StateMessage.Sending;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await TrySetDosadores();
+    }
+
+    private async Task TrySetDosadores()
+    {
+        try
+        {
+            LoadDosadores = StateMessage.Sending;
+            await SetDosadores();
+            LoadDosadores = StateMessage.Sent;
+        }
+        catch
+        {
+            LoadDosadores = StateMessage.None;
+            Errors.Add("Falha ao coletar dosadores.");
+        }
+    }
+
+    private async Task SetDosadores()
+    {
+        using var response = await _client.GetAsync("/api/dosador/all");
+
+        var errorsResponse = await response.TryGetErrors();
+
+        if (errorsResponse.ContainsError)
+        {
+            Errors.Add("Falha em coleta de dosadores.");
+            return;
+        }
+
+        Dosadores = await response.Content.ReadFromJsonAsync<IEnumerable<DosadorJoinUsuarioDosadorViewModel>>()
+            ?? Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+    }
+}
