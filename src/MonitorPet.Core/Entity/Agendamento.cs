@@ -1,4 +1,6 @@
-﻿namespace MonitorPet.Core.Entity;
+﻿using MonitorPet.Core.Exceptions;
+
+namespace MonitorPet.Core.Entity;
 
 public class Agendamento
 {
@@ -42,5 +44,22 @@ public class Agendamento
     public override int GetHashCode()
     {
         return base.GetHashCode() * 45976549;
+    }
+
+    public void TurnOff()
+        => Ativado = false;
+
+    public void TurnOn()
+        => Ativado = true;
+
+    public static Agendamento CreateActivated(Guid idDosador, DayOfWeek diaSemana, TimeOnly horaAgendada, double qtdeLiberadaGr)
+    {
+        if (idDosador == default)
+            throw new CommonCoreException("Dosador inválido.");
+
+        if (qtdeLiberadaGr < 1)
+            throw new CommonCoreException("Quantidade de ração inválida.");
+
+        return new Agendamento(0, idDosador, (int)diaSemana, horaAgendada, qtdeLiberadaGr, true);
     }
 }
