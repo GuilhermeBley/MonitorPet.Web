@@ -2,7 +2,7 @@
 
 namespace MonitorPet.Core.Entity;
 
-public class Agendamento
+public class Agendamento : Entity
 {
     public int Id { get; private set; } 
     public Guid IdDosador { get; private set; }
