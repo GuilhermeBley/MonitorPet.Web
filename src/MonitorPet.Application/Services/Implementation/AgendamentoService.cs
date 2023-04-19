@@ -76,7 +76,7 @@ public class AgendamentoService : IAgendamentoService
 
         await ThrowIfCannotAccessDosador(user.RequiredIdUser, idDosadorGuid);
 
-        return await _agendamentoRepository.GetByDosador(idDosadorGuid.ToString());
+        return await _agendamentoRepository.GetByDosador(idDosadorGuid);
     }
 
     public async Task<AgendamentoModel> UpdateById(int id, UpdateAgendamentoModel updateAgendamentoModel)

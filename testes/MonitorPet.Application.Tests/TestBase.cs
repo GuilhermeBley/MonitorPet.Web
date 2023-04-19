@@ -21,6 +21,20 @@ public abstract class TestBase
     {
     }
 
+    protected async Task<(CreateUserModel UserCreated, IEnumerable<Claim> Claims, Model.Dosador.DosadorModel Dosador)> CreateUserWithDosador()
+    {
+        var tupleUserCreated = await CreateAndLoginUser();
+        var dosadorCreated = await CreateDosador();
+
+        var dosadorService = ServiceProvider.GetRequiredService<IDosadorService>();
+
+        using var context = CreateContext(tupleUserCreated.Claims);
+
+        await dosadorService.AddDosadorToUser(context.ClaimModel.IdUser, dosadorCreated.IdDosador.ToString());
+
+        return (tupleUserCreated.UserCreated, tupleUserCreated.Claims, dosadorCreated);
+    }
+
     protected InternalContext CreateContext(IEnumerable<Claim> claims)
     {
         return new InternalContext(
@@ -85,7 +99,8 @@ public abstract class TestBase
     {
         if (scoopedServiceProvider is null)
             scoopedServiceProvider = ServiceProvider;
-        var context = scoopedServiceProvider.GetRequiredService<InMemoryDb.AppDbContext>();
+
+        await using var context = scoopedServiceProvider.GetRequiredService<InMemoryDb.AppDbContext>();
 
         var dosadorToCreate = Mocks.DosadorMock.CreateNewDosador();
 
@@ -137,8 +152,10 @@ public abstract class TestBase
                 .AddScoped<Application.Repositories.IUsuarioDosadorRepository, Repositories.UsuarioDosadorRepository>()
                 .AddScoped<Application.Repositories.IUserRepository, Repositories.UserRepository>()
                 .AddScoped<Application.Repositories.IDosadorRepository, Repositories.DosadorRepository>()
+                .AddScoped<Application.Repositories.IAgendamentoRepository, Repositories.AgendamentoRepository>()
 
                 .AddScoped<Application.Services.Interfaces.IUserService, Application.Services.Implementation.UserService>()
+                .AddScoped<Application.Services.Interfaces.IAgendamentoService, Application.Services.Implementation.AgendamentoService>()
                 .AddScoped<Application.Services.Interfaces.IDosadorService, Application.Services.Implementation.DosadorService>();
 
         protected override void AfterCreated(IServiceProvider provider)

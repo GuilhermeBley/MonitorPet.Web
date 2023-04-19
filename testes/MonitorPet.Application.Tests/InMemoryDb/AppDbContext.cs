@@ -8,6 +8,7 @@ public class AppDbContext : DbContext
     public DbSet<UserDbModel> Users { get; set; } = null!;
     public DbSet<DosadorDbModel> Dosadores { get; set; } = null!;
     public DbSet<UsuarioDosadorDbModel> UsuariosDosadores { get; set; } = null!;
+    public DbSet<AgendamentoDbModel> Agendamentos { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseInMemoryDatabase(databaseName: "Test");
@@ -33,5 +34,20 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<UsuarioDosadorDbModel>()
             .HasIndex(table => new { table.IdDosador, table.IdUsuario }).IsUnique();
+
+        modelBuilder.Entity<UsuarioDosadorDbModel>()
+            .HasOne(e => e.Dosador);
+
+        modelBuilder.Entity<UsuarioDosadorDbModel>()
+            .HasOne(e => e.User);
+
+        modelBuilder.Entity<AgendamentoDbModel>()
+            .HasKey(table => new { table.Id });
+
+        modelBuilder.Entity<AgendamentoDbModel>()
+            .Property(table => table.Id);
+
+        modelBuilder.Entity<AgendamentoDbModel>()
+            .HasOne(e => e.Dosador);
     }
 }
