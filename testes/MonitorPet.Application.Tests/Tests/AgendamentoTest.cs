@@ -139,7 +139,7 @@ public class AgendamentoTest : TestBase
     }
 
     [Fact]
-    public async Task UpdateById_TryUpdateWithSameData_Success()
+    public async Task UpdateById_TryUpdateWithSameDate_Success()
     {
         var agendamentoService = ServiceProvider.GetRequiredService<IAgendamentoService>();
 
@@ -162,6 +162,36 @@ public class AgendamentoTest : TestBase
 
         Assert.NotNull(
             await agendamentoService.UpdateById(agendamentoCreated.Id, updateDosador));
+    }
+
+    [Fact]
+    public async Task UpdateById_TryUpdateWithExistingSameDate_Success()
+    {
+        var agendamentoService = ServiceProvider.GetRequiredService<IAgendamentoService>();
+
+        var tupleUserDosador = await CreateUserWithDosador();
+
+        using var context = CreateContext(tupleUserDosador.Claims);
+
+        var existingWeekDay = 2;
+
+        var validDosador1 = Mocks.AgendamentoMock.CreateValidAgendamento(tupleUserDosador.Dosador.IdDosador, weekDay: 1);
+        var validDosador2 = Mocks.AgendamentoMock.CreateValidAgendamento(tupleUserDosador.Dosador.IdDosador, weekDay: existingWeekDay);
+
+        var agendamento1Created = await agendamentoService.Create(validDosador1);
+        await agendamentoService.Create(validDosador2);
+
+        var updateDosador = new UpdateAgendamentoModel
+        {
+            Ativado = agendamento1Created.Ativado,
+            DiaSemana = existingWeekDay,
+            HoraAgendada = agendamento1Created.HoraAgendada,
+            IdDosador = agendamento1Created.IdDosador,
+            QtdeLiberadaGr = agendamento1Created.QtdeLiberadaGr
+        };
+
+        await Assert.ThrowsAnyAsync<Core.Exceptions.ConflictCoreException>(
+            () => agendamentoService.UpdateById(agendamento1Created.Id, updateDosador));
     }
 
     [Fact]
