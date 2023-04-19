@@ -123,14 +123,6 @@ public class AgendamentoService : IAgendamentoService
         return Agendamento.CreateActivated(create.IdDosador, dayOfWeek, create.HoraAgendada, create.QtdeLiberadaGr);
     }
 
-    private static Agendamento MapAgendamentoModel(AgendamentoModel agendamentoModel)
-    {
-        var dayOfWeek = TryGetDayOfWeek(agendamentoModel.DiaSemana)
-            ?? throw new Core.Exceptions.CommonCoreException("Dia da semana inválido.");
-
-        return Agendamento.CreateActivated(agendamentoModel.IdDosador, dayOfWeek, agendamentoModel.HoraAgendada, agendamentoModel.QtdeLiberadaGr);
-    }
-
     private static DayOfWeek? TryGetDayOfWeek(int dayOfWeekInteger)
     {
         try
