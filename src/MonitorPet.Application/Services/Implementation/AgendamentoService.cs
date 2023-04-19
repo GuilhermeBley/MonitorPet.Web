@@ -36,6 +36,8 @@ public class AgendamentoService : IAgendamentoService
 
         await ThrowIfCannotAccessDosador(user.RequiredIdUser, createAgendamentoModel.IdDosador);
 
+        await ThrowIfAgendamentoDuplicated(entityToCreate, createAgendamentoModel.IdDosador);
+
         var agendamentoCreated = await _agendamentoRepository.Create(entityToCreate);
 
         await transaction.SaveChangesAsync();
@@ -95,6 +97,8 @@ public class AgendamentoService : IAgendamentoService
 
         await ThrowIfCannotAccessDosador(user.RequiredIdUser, agendamentoFound.IdDosador);
 
+        await ThrowIfAgendamentoDuplicated(entityToUpdate, agendamentoFound.IdDosador, ignoreAgendamentoIds: agendamentoFound.Id);
+
         var agendamentoDeleted = await _agendamentoRepository.UpdateByIdOrDefault(agendamentoFound.Id, entityToUpdate)
             ?? throw new Core.Exceptions.NotFoundCoreException("Agendamento não encontrado.");
 
@@ -131,6 +135,16 @@ public class AgendamentoService : IAgendamentoService
         return Agendamento.Create(update.IdDosador, dayOfWeek, update.HoraAgendada, update.QtdeLiberadaGr, update.Ativado);
     }
 
+    /// <summary>
+    /// Needs a connection
+    /// </summary>
+    private async Task ThrowIfAgendamentoDuplicated(Agendamento toCheck, Guid idDosador, params int[] ignoreAgendamentoIds)
+    {
+        var agendamentos = await _agendamentoRepository.GetByDosador(idDosador);
+
+        ThrowIfContainsSameDate(toCheck.DiaSemana, toCheck.HoraAgendada, agendamentos, ignoreAgendamentoIds);
+    }
+
     private static DayOfWeek? TryGetDayOfWeek(int dayOfWeekInteger)
     {
         try
@@ -143,5 +157,20 @@ public class AgendamentoService : IAgendamentoService
         {
             return null;
         }
+    }
+
+    private static void ThrowIfContainsSameDate(int weekDay, TimeOnly time, IEnumerable<AgendamentoModel> agendamentosToCheck, params int[] ignoreAgendamentoIds)
+    {
+        var agendamentosIgnoredIds = agendamentosToCheck.Where(a => !ignoreAgendamentoIds.Contains(a.Id));
+
+        var containsDuplicated = agendamentosIgnoredIds
+            .Any(a =>
+                a.DiaSemana == weekDay &&
+                a.HoraAgendada.Hour == time.Hour &&
+                a.HoraAgendada.Minute == time.Minute
+            );
+
+        if (containsDuplicated)
+            throw new Core.Exceptions.ConflictCoreException("Agendamento com dia da semana, hora e minuto já existente.");
     }
 }
