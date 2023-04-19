@@ -35,5 +35,5 @@ public interface IAgendamentoService
     /// </remarks>
     /// <exception cref="ForbiddenCoreException"></exception>
     /// <exception cref="CoreException"></exception>
-    Task<AgendamentoModel> UpdateById(int id, CreateAgendamentoModel updateAgendamentoModel);
+    Task<AgendamentoModel> UpdateById(int id, UpdateAgendamentoModel updateAgendamentoModel);
 }

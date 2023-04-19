@@ -52,7 +52,7 @@ public class Agendamento : Entity
     public void TurnOn()
         => Ativado = true;
 
-    public static Agendamento CreateActivated(Guid idDosador, DayOfWeek diaSemana, TimeOnly horaAgendada, double qtdeLiberadaGr)
+    public static Agendamento Create(Guid idDosador, DayOfWeek diaSemana, TimeOnly horaAgendada, double qtdeLiberadaGr, bool ativado)
     {
         if (idDosador == default)
             throw new CommonCoreException("Dosador inválido.");
@@ -60,6 +60,9 @@ public class Agendamento : Entity
         if (qtdeLiberadaGr < 1)
             throw new CommonCoreException("Quantidade de ração inválida.");
 
-        return new Agendamento(0, idDosador, (int)diaSemana, horaAgendada, qtdeLiberadaGr, true);
+        return new Agendamento(0, idDosador, (int)diaSemana, horaAgendada, qtdeLiberadaGr, ativado);
     }
+
+    public static Agendamento CreateActivated(Guid idDosador, DayOfWeek diaSemana, TimeOnly horaAgendada, double qtdeLiberadaGr)
+        => Create(idDosador, diaSemana, horaAgendada, qtdeLiberadaGr, true);
 }

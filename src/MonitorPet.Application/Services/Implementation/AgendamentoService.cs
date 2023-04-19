@@ -79,14 +79,14 @@ public class AgendamentoService : IAgendamentoService
         return await _agendamentoRepository.GetByDosador(idDosadorGuid.ToString());
     }
 
-    public async Task<AgendamentoModel> UpdateById(int id, CreateAgendamentoModel updateAgendamentoModel)
+    public async Task<AgendamentoModel> UpdateById(int id, UpdateAgendamentoModel updateAgendamentoModel)
     {
         var user = await _contextClaim.GetRequiredCurrentClaim();
 
         if (id < 1)
             throw new Core.Exceptions.CommonCoreException("Id inválido.");
 
-        var entityToUpdate = MapCreateAgendamentoModel(updateAgendamentoModel);
+        var entityToUpdate = MapUpdateAgendamentoModel(updateAgendamentoModel);
 
         using var transaction = await _uoW.BeginTransactionAsync();
 
@@ -121,6 +121,14 @@ public class AgendamentoService : IAgendamentoService
             ?? throw new Core.Exceptions.CommonCoreException("Dia da semana inválido.");
 
         return Agendamento.CreateActivated(create.IdDosador, dayOfWeek, create.HoraAgendada, create.QtdeLiberadaGr);
+    }
+
+    private static Agendamento MapUpdateAgendamentoModel(UpdateAgendamentoModel update)
+    {
+        var dayOfWeek = TryGetDayOfWeek(update.DiaSemana)
+            ?? throw new Core.Exceptions.CommonCoreException("Dia da semana inválido.");
+
+        return Agendamento.Create(update.IdDosador, dayOfWeek, update.HoraAgendada, update.QtdeLiberadaGr, update.Ativado);
     }
 
     private static DayOfWeek? TryGetDayOfWeek(int dayOfWeekInteger)
