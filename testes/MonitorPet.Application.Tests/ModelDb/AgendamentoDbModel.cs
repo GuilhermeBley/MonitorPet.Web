@@ -1,16 +1,18 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MonitorPet.Application.Tests.ModelDb;
 
-[Table("UsuarioDosador")]
-public class UsuarioDosadorDbModel
+[Table("Agendamento")]
+public class AgendamentoDbModel
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
-    public int IdUsuario { get; set; }
-    public UserDbModel User { get; set; } = null!;
     public Guid IdDosador { get; set; }
     public DosadorDbModel Dosador { get; set; } = null!;
+    public int DiaSemana { get; set; }
+    public TimeOnly HoraAgendada { get; set; }
+    public double QtdeLiberadaGr { get; set; }
+    public bool Ativado { get; set; }
 }
