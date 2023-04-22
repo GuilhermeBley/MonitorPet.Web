@@ -74,12 +74,13 @@ public class AgendamentoController : ControllerBase
     public async Task<ActionResult<AgendamentoViewModel>> PatchAgendamento(int id, [FromBody] PatchAgendamentoViewModel patchAgendamentoModel)
     {
         var agendamentoToPatch = await _agendamentoService.GetById(id);
-        var agendamentoToUpdate = new UpdateAgendamentoModel();
-
-        agendamentoToUpdate.Ativado = patchAgendamentoModel.Ativado is not null ? patchAgendamentoModel.Ativado.Value : agendamentoToPatch.Ativado;
-        agendamentoToUpdate.HoraAgendada = patchAgendamentoModel.HoraAgendada is not null ? patchAgendamentoModel.HoraAgendada.Value : agendamentoToPatch.HoraAgendada;
-        agendamentoToUpdate.QtdeLiberadaGr = patchAgendamentoModel.QtdeLiberadaGr is not null ? patchAgendamentoModel.QtdeLiberadaGr.Value : agendamentoToPatch.QtdeLiberadaGr;
-        agendamentoToUpdate.DiaSemana = patchAgendamentoModel.DiaSemana is not null ? patchAgendamentoModel.DiaSemana.Value : agendamentoToPatch.DiaSemana;
+        var agendamentoToUpdate = new UpdateAgendamentoModel
+        {
+            Ativado = patchAgendamentoModel.Ativado is not null ? patchAgendamentoModel.Ativado.Value : agendamentoToPatch.Ativado,
+            HoraAgendada = patchAgendamentoModel.HoraAgendada is not null ? patchAgendamentoModel.HoraAgendada.Value : agendamentoToPatch.HoraAgendada,
+            QtdeLiberadaGr = patchAgendamentoModel.QtdeLiberadaGr is not null ? patchAgendamentoModel.QtdeLiberadaGr.Value : agendamentoToPatch.QtdeLiberadaGr,
+            DiaSemana = patchAgendamentoModel.DiaSemana is not null ? patchAgendamentoModel.DiaSemana.Value : agendamentoToPatch.DiaSemana
+        };
 
         var agendamentoMapped = _map.Map<UpdateAgendamentoModel>(agendamentoToUpdate);
 
