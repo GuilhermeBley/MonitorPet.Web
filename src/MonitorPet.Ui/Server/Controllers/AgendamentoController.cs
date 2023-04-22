@@ -1,10 +1,8 @@
 using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MonitorPet.Application.Model.Agendamento;
 using MonitorPet.Application.Services.Interfaces;
-using MonitorPet.Ui.Server.Security;
 using MonitorPet.Ui.Shared.Model.Agendamento;
 
 namespace MonitorPet.Ui.Server.Controllers;
