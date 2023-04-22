@@ -123,7 +123,6 @@ public class AgendamentoTest : TestBase
             Ativado = agendamentoCreated.Ativado,
             DiaSemana = newWeekDay,
             HoraAgendada = agendamentoCreated.HoraAgendada,
-            IdDosador = agendamentoCreated.IdDosador,
             QtdeLiberadaGr = agendamentoCreated.QtdeLiberadaGr
         };
 
@@ -156,7 +155,6 @@ public class AgendamentoTest : TestBase
             Ativado = agendamentoCreated.Ativado,
             DiaSemana = agendamentoCreated.DiaSemana,
             HoraAgendada = agendamentoCreated.HoraAgendada,
-            IdDosador = agendamentoCreated.IdDosador,
             QtdeLiberadaGr = agendamentoCreated.QtdeLiberadaGr
         };
 
@@ -186,7 +184,6 @@ public class AgendamentoTest : TestBase
             Ativado = agendamento1Created.Ativado,
             DiaSemana = existingWeekDay,
             HoraAgendada = agendamento1Created.HoraAgendada,
-            IdDosador = agendamento1Created.IdDosador,
             QtdeLiberadaGr = agendamento1Created.QtdeLiberadaGr
         };
 
@@ -212,7 +209,6 @@ public class AgendamentoTest : TestBase
             Ativado = agendamentoCreated.Ativado,
             DiaSemana = agendamentoCreated.DiaSemana,
             HoraAgendada = agendamentoCreated.HoraAgendada,
-            IdDosador = agendamentoCreated.IdDosador,
             QtdeLiberadaGr = agendamentoCreated.QtdeLiberadaGr
         };
 

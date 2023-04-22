@@ -28,6 +28,11 @@ public interface IAgendamentoService
     Task<IEnumerable<AgendamentoModel>> GetByDosador(string idDosador);
 
     /// <summary>
+    /// Get by id
+    /// </summary>
+    Task<AgendamentoModel> GetById(int id);
+
+    /// <summary>
     /// Update by id own agendamento
     /// </summary>
     /// <remarks>
