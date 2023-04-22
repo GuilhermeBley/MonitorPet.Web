@@ -14,7 +14,6 @@ public interface IUserService
     Task Create(CreateUserModel createUserModel);
     Task<QueryUserModel> GetByIdUser(int idUser);
     Task<ResultUserLoginModel> Login(string email, string password);
-    Task<Claim[]> LoginDosador(int idUser, Guid idDosador);
     Task SendAgainEmailConfirmAccount(string email);
     Task SendEmailChangePassword(string email);
     Task<QueryUserModel> Update(int idUser, UpdateUserModel updateUserModel);
