@@ -7,11 +7,11 @@ public class Agendamento : Entity
     public int Id { get; private set; } 
     public Guid IdDosador { get; private set; }
     public int DiaSemana { get; private set; }
-    public TimeOnly HoraAgendada { get; private set; }
+    public TimeSpan HoraAgendada { get; private set; }
     public double QtdeLiberadaGr { get; private set; } 
     public bool Ativado { get; private set; }
 
-    private Agendamento(int id, Guid idDosador, int diaSemana, TimeOnly horaAgendada, double qtdeLiberadaGr, bool ativado)
+    private Agendamento(int id, Guid idDosador, int diaSemana, TimeSpan horaAgendada, double qtdeLiberadaGr, bool ativado)
     {
         Id = id;
         IdDosador = idDosador;
@@ -52,7 +52,7 @@ public class Agendamento : Entity
     public void TurnOn()
         => Ativado = true;
 
-    public static Agendamento Create(Guid idDosador, DayOfWeek diaSemana, TimeOnly horaAgendada, double qtdeLiberadaGr, bool ativado)
+    public static Agendamento Create(Guid idDosador, DayOfWeek diaSemana, TimeSpan horaAgendada, double qtdeLiberadaGr, bool ativado)
     {
         if (idDosador == default)
             throw new CommonCoreException("Dosador inválido.");
@@ -63,6 +63,6 @@ public class Agendamento : Entity
         return new Agendamento(0, idDosador, (int)diaSemana, horaAgendada, qtdeLiberadaGr, ativado);
     }
 
-    public static Agendamento CreateActivated(Guid idDosador, DayOfWeek diaSemana, TimeOnly horaAgendada, double qtdeLiberadaGr)
+    public static Agendamento CreateActivated(Guid idDosador, DayOfWeek diaSemana, TimeSpan horaAgendada, double qtdeLiberadaGr)
         => Create(idDosador, diaSemana, horaAgendada, qtdeLiberadaGr, true);
 }

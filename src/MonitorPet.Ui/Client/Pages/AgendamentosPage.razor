@@ -39,19 +39,19 @@
 
     <h1 class="text-primary"><i class="fa-solid fa-alarm-clock"></i> Agendamentos</h1>
     <hr>
-    <div class="row">
-        <div class="col-md">
 
-            @foreach (var agendamento in Agendamentos)
-            {
+    @foreach (var agendamento in Agendamentos)
+    {
+        <div class="row">
+            <div class="col-md">
                 <div class="schedule-time form-check form-switch" @onclick="(()=>OpenModalOptionsAgendamento(agendamento.Id))">
                     <input class="form-check-input" type="checkbox" id="@agendamento.Id" checked="@agendamento.Ativado">
-                    <label class="form-check-label" for="@agendamento.Id">@agendamento.HoraAgendada.ToString("hh:MM")</label>
+                    <label class="form-check-label" for="@agendamento.Id">@agendamento.HoraAgendada.ToString(@"hh\:mm")</label>
                 </div>
-            }
 
+            </div>
         </div>
-    </div>
+    }
 </div>
 
 @code {

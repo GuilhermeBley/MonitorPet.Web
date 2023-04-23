@@ -176,15 +176,15 @@ public class AgendamentoService : IAgendamentoService
         }
     }
 
-    private static void ThrowIfContainsSameDate(int weekDay, TimeOnly time, IEnumerable<AgendamentoModel> agendamentosToCheck, params int[] ignoreAgendamentoIds)
+    private static void ThrowIfContainsSameDate(int weekDay, TimeSpan time, IEnumerable<AgendamentoModel> agendamentosToCheck, params int[] ignoreAgendamentoIds)
     {
         var agendamentosIgnoredIds = agendamentosToCheck.Where(a => !ignoreAgendamentoIds.Contains(a.Id));
 
         var containsDuplicated = agendamentosIgnoredIds
             .Any(a =>
                 a.DiaSemana == weekDay &&
-                a.HoraAgendada.Hour == time.Hour &&
-                a.HoraAgendada.Minute == time.Minute
+                a.HoraAgendada.Hours == time.Hours &&
+                a.HoraAgendada.Minutes == time.Minutes
             );
 
         if (containsDuplicated)

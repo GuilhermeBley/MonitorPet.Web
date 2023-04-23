@@ -9,7 +9,7 @@ public class UpdateAgendamentoViewModel
     public int DiaSemana { get; set; }
 
     [Required(ErrorMessage = "Hora agendada é obrigatória.")]
-    public TimeOnly? HoraAgendada { get; set; }
+    public TimeSpan? HoraAgendada { get; set; }
 
     [Required(ErrorMessage = "Quantidade de ração é obrigatória.")]
     [Range(0.1, 10000, ErrorMessage = "Quantidade de ração inválida.")]
