@@ -1,5 +1,6 @@
 ﻿@page "/agendamentos"
-@page "/agendamentos/{IdDosador}/{Id}"
+@page "/agendamentos/{IdDosador:guid}"
+@page "/agendamentos/{IdDosador:guid}/{Id:int}"
 
 @using MonitorPet.Ui.Client.Services
 @using MonitorPet.Ui.Shared.Model.Agendamento
@@ -9,18 +10,21 @@
 @inject UserInfoService _userInfo
 @inject NavigationManager _nav
 
-<div class="container-md h-100">
+<div class="container-md h-100 @ClassModalContainerCss">
 
-    <SelectDosadorComponent Dosadores="Dosadores"
+    @if (Dosadores.Any())
+    {
+        <SelectDosadorComponent Dosadores="Dosadores"
                             OnChangeDosador="((d)=>IdDosador=d.IdDosador)">
-    </SelectDosadorComponent>
+        </SelectDosadorComponent>
+    }
 
     <div class="modal @ClassModalCss" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Modal title</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <h5 class="modal-title">Editar agendamento</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="(()=>CloseModalOptionsAgendamento())">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -28,8 +32,8 @@
                     <p>Modal body text goes here.</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary">Save changes</button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Salvar</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="(()=>CloseModalOptionsAgendamento())">Fechar</button>
                 </div>
             </div>
         </div>
@@ -39,23 +43,39 @@
 
     <h1 class="text-primary"><i class="fa-solid fa-alarm-clock"></i> Agendamentos</h1>
     <hr>
+    <div class="row">
 
-    @foreach (var agendamento in Agendamentos)
-    {
-        <div class="row">
-            <div class="col-md">
-                <div class="schedule-time form-check form-switch" @onclick="(()=>OpenModalOptionsAgendamento(agendamento.Id))">
-                    <input class="form-check-input" type="checkbox" id="@agendamento.Id" checked="@agendamento.Ativado">
-                    <label class="form-check-label" for="@agendamento.Id">@agendamento.HoraAgendada.ToString(@"hh\:mm")</label>
-                </div>
-
+        @foreach (var agendamento in Agendamentos)
+        {
+            <div class="schedule-time input-group">
+                <div class="input-group-text">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="@agendamento.Id" checked="@agendamento.Ativado">
+                    </div>
+                    @agendamento.HoraAgendada.ToString(@"hh\:mm") - @GetDaySummaryOfWeek(agendamento.DiaSemana)</div>
+                <button type="button" class="btn btn-outline-secondary"  @onclick="(()=>OpenModalOptionsAgendamento(agendamento.Id))">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
             </div>
-        </div>
-    }
+        }
+    </div>
 </div>
 
 @code {
+    private static Dictionary<int, string> _dayOfWeek { get; }
+        = new Dictionary<int, string>(){
+            {0, "Domingo"},
+            {1, "Segunda"},
+            {2, "Terça"},
+            {3, "Quarta"},
+            {4, "Quinta"},
+            {5, "Sexta"},
+            {6, "Sábado"},
+        };
+
     private string? ClassModalCss => IdDosador == default || Id == default ? null : "d-block";
+    private string? ClassModalContainerCss => IdDosador == default || Id == default ? null : "modal-open";
+
     private List<string> Errors { get; } = new();
     private IEnumerable<AgendamentoViewModel> Agendamentos { get; set; }
         = Enumerable.Empty<AgendamentoViewModel>();
@@ -80,13 +100,13 @@
     private void OpenModalOptionsAgendamento(int id)
     {
         Id = id;
-        _nav.NavigateTo($"/agendamentos/{IdDosador}/{Id}");
+        _nav.NavigateTo($"/agendamentos/{IdDosador.ToString()}/{Id}");
     }
 
     private void CloseModalOptionsAgendamento()
     {
         Id = 0;
-        _nav.NavigateTo($"/agendamentos");
+        _nav.NavigateTo($"/agendamentos/{IdDosador.ToString()}");
     }
 
     private async Task<IEnumerable<AgendamentoViewModel>> GetAgendamentos(Guid idDosador)
@@ -106,7 +126,8 @@
                 return Enumerable.Empty<AgendamentoViewModel>();
             }
 
-            return await response.Content.ReadFromJsonAsync<IEnumerable<AgendamentoViewModel>>()
+            return (await response.Content.ReadFromJsonAsync<IEnumerable<AgendamentoViewModel>>())
+                ?.OrderBy(a => a.DiaSemana)
                 ?? Enumerable.Empty<AgendamentoViewModel>();
         }
         catch
@@ -137,5 +158,12 @@
             Errors.Add("Falha em coleta de dosadores.");
             return Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>(); ;
         }
+    }
+
+    private static string GetDaySummaryOfWeek(int day)
+    {
+        _dayOfWeek.TryGetValue(day, out string? value);
+
+        return value;
     }
 }
