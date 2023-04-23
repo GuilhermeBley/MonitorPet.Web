@@ -1,0 +1,43 @@
+﻿@using MonitorPet.Ui.Shared.Model.Dosador
+
+@if (Dosadores is not null && Dosadores.Any() && CurrentSelected is not null)
+{
+    <div class="btn-group">
+        <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            @CurrentSelected.Nome
+        </button>
+        <div class="dropdown-menu dropdown-menu-right">
+            @foreach(var option in AllMinusCurrent)
+            {
+                <button class="dropdown-item" type="button" @onclick="(async ()=> await ChangeOptionsAndCallEvent(option))">@option.Nome</button>   
+            }
+        </div>
+    </div>
+}
+
+@code {
+
+    private DosadorJoinUsuarioDosadorViewModel? CurrentSelected { get; set; }
+
+    private IEnumerable<DosadorJoinUsuarioDosadorViewModel> AllMinusCurrent =>
+        Dosadores.Where(d => d.IdDosador != CurrentSelected?.IdDosador);
+
+    [Parameter]
+    public IEnumerable<DosadorJoinUsuarioDosadorViewModel> Dosadores { get; set; }
+        = Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+
+    [Parameter]
+    public EventCallback<DosadorJoinUsuarioDosadorViewModel> OnChangeDosador { get; set; }
+
+    protected override void OnInitialized()
+    {
+        CurrentSelected = Dosadores.FirstOrDefault();
+    }
+
+    private async Task ChangeOptionsAndCallEvent(DosadorJoinUsuarioDosadorViewModel dosadorSelected)
+    {
+        CurrentSelected = dosadorSelected;
+
+        await OnChangeDosador.InvokeAsync(dosadorSelected);
+    }
+}

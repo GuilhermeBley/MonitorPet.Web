@@ -1,0 +1,141 @@
+﻿@page "/agendamentos"
+@page "/agendamentos/{IdDosador}/{Id}"
+
+@using MonitorPet.Ui.Client.Services
+@using MonitorPet.Ui.Shared.Model.Agendamento
+@using MonitorPet.Ui.Shared.Model.Dosador
+
+@inject HttpClient _client
+@inject UserInfoService _userInfo
+@inject NavigationManager _nav
+
+<div class="container-md h-100">
+
+    <SelectDosadorComponent Dosadores="Dosadores"
+                            OnChangeDosador="((d)=>IdDosador=d.IdDosador)">
+    </SelectDosadorComponent>
+
+    <div class="modal @ClassModalCss" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Modal body text goes here.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ErrorComponent Errors="Errors"></ErrorComponent>
+
+    <h1 class="text-primary"><i class="fa-solid fa-alarm-clock"></i> Agendamentos</h1>
+    <hr>
+    <div class="row">
+        <div class="col-md">
+
+            @foreach (var agendamento in Agendamentos)
+            {
+                <div class="schedule-time form-check form-switch" @onclick="(()=>OpenModalOptionsAgendamento(agendamento.Id))">
+                    <input class="form-check-input" type="checkbox" id="@agendamento.Id" checked="@agendamento.Ativado">
+                    <label class="form-check-label" for="@agendamento.Id">@agendamento.HoraAgendada.ToString("hh:MM")</label>
+                </div>
+            }
+
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? ClassModalCss => IdDosador == default || Id == default ? null : "d-block";
+    private List<string> Errors { get; } = new();
+    private IEnumerable<AgendamentoViewModel> Agendamentos { get; set; }
+        = Enumerable.Empty<AgendamentoViewModel>();
+    private IEnumerable<DosadorJoinUsuarioDosadorViewModel> Dosadores { get; set; }
+        = Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+
+    [Parameter]
+    public Guid IdDosador { get; set; } = Guid.Empty;
+
+    [Parameter]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Dosadores = await GetDosadores();
+
+        IdDosador = Dosadores.FirstOrDefault()?.IdDosador ?? default;
+
+        Agendamentos = await GetAgendamentos(IdDosador);
+    }
+
+    private void OpenModalOptionsAgendamento(int id)
+    {
+        Id = id;
+        _nav.NavigateTo($"/agendamentos/{IdDosador}/{Id}");
+    }
+
+    private void CloseModalOptionsAgendamento()
+    {
+        Id = 0;
+        _nav.NavigateTo($"/agendamentos");
+    }
+
+    private async Task<IEnumerable<AgendamentoViewModel>> GetAgendamentos(Guid idDosador)
+    {
+        const string URI_GET = "/api/agendamento/dosador/{idDosador}";
+
+        try
+        {
+            using var response = await _client.GetAsync(
+                URI_GET.Replace("{idDosador}", idDosador.ToString()));
+
+            var errors = await response.TryGetErrors();
+
+            if (errors.ContainsError)
+            {
+                Errors.AddRange(errors.ErrorsMessages);
+                return Enumerable.Empty<AgendamentoViewModel>();
+            }
+
+            return await response.Content.ReadFromJsonAsync<IEnumerable<AgendamentoViewModel>>()
+                ?? Enumerable.Empty<AgendamentoViewModel>();
+        }
+        catch
+        {
+            return Enumerable.Empty<AgendamentoViewModel>();
+        }
+    }
+
+    private async Task<IEnumerable<DosadorJoinUsuarioDosadorViewModel>> GetDosadores()
+    {
+        try
+        {
+            using var response = await _client.GetAsync("/api/dosador/all");
+
+            var errorsResponse = await response.TryGetErrors();
+
+            if (errorsResponse.ContainsError)
+            {
+                Errors.Add("Falha em coleta de dosadores.");
+                return Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>(); ;
+            }
+
+            return await response.Content.ReadFromJsonAsync<IEnumerable<DosadorJoinUsuarioDosadorViewModel>>()
+                ?? Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+        }
+        catch
+        {
+            Errors.Add("Falha em coleta de dosadores.");
+            return Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>(); ;
+        }
+    }
+}
