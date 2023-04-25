@@ -16,4 +16,8 @@
     .schedule-time .input-group-text {
         font-size: 1.1rem;
     }
+
+    .text-complete {
+        display: none;
+    }
 }
