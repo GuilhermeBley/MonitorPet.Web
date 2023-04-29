@@ -27,7 +27,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Editar agendamento</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="(()=>CloseModalOptionsAgendamento())">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="(()=>CloseModalCreateAgendamento())">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
@@ -36,7 +36,7 @@
                             <Footer>
                                 <div class="modal-footer">
                                     <button type="submit" class="btn btn-primary">Salvar</button>
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="(()=>CloseModalOptionsAgendamento())">Fechar</button>
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="(()=>CloseModalCreateAgendamento())">Fechar</button>
                                 </div>
                             </Footer>
                         </EditFormAgendamentoComponent>
@@ -52,16 +52,21 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Criar novo agendamento</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="(()=>CloseModalOptionsAgendamento())">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="(()=>CloseModalCreateAgendamento())">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p>Modal body text goes here.</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary">Criar</button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="(()=>CloseModalOptionsAgendamento())">Fechar</button>
+                        <ErrorComponent Errors="CreateErrors"></ErrorComponent>
+                        <EditFormAgendamentoComponent
+                            OnValid="(async (model)=> await Create(model))">
+                            <Footer>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">Adicionar</button>
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="(()=>CloseModalCreateAgendamento())">Fechar</button>
+                                </div>
+                            </Footer>
+                        </EditFormAgendamentoComponent>
                     </div>
                 </div>
             </div>
@@ -74,20 +79,26 @@
     }
 
     <ErrorComponent Errors="Errors"></ErrorComponent>
+    <SuccessComponent Successes="Successes"></SuccessComponent>
 
     <div class="schedule-time input-group">
         <h1 class="text-primary"><i class="fa-solid fa-alarm-clock"></i> Agendamentos</h1>
         <button type="button" class="btn btn-outline-success border-0 ms-auto"
-            @onclick="OpenModalCreateAgendamento">
+                @onclick="OpenModalCreateAgendamento" disabled="@(IdDosador==default)">
             <span class="text-complete">Novo agendamento  </span><i class="fa-sharp fa-solid fa-plus"></i>
         </button>
     </div>
     <hr>
-    <div class="row justify-content-md-center">
+    <div class="row justify-content-center">
+
+        @if (AgendamentosListState == StateMessage.Sending)
+        {
+            <LoadComponent></LoadComponent>
+        }
 
         @foreach (var agendamento in Agendamentos)
         {
-            <div class="col-12">
+            <div class="col-md-4">
                 <div class="schedule-time input-group">
                     <div class="input-group-text">
                         <div class="form-check form-switch">
@@ -95,7 +106,9 @@
                         </div>
                         @agendamento.HoraAgendada.ToString(@"hh\:mm") - @GetDaySummaryOfWeek(agendamento.DiaSemana)
                     </div>
-                    <button type="button" class="btn btn-outline-secondary" @onclick="(()=>OpenModalOptionsAgendamento(agendamento.Id))">
+                    <button type="button" class="btn btn-outline-secondary" 
+                        @onclick="(()=>OpenModalOptionsAgendamento(agendamento.Id))"
+                        disabled="@(IdDosador==default)">
                         <i class="fa-solid fa-pen-to-square"></i>
                     </button>
                 </div>
@@ -120,11 +133,15 @@
     private string? ClassCreateModalCss => IdDosadorToCreate == default ? null : "d-block";
 
     private List<string> Errors { get; } = new();
-    private IEnumerable<AgendamentoViewModel> Agendamentos { get; set; }
-        = Enumerable.Empty<AgendamentoViewModel>();
+    private List<string> CreateErrors { get; } = new();
+    private List<string> UpdateErrors { get; } = new();
+    private List<string> Successes { get; } = new();
+    private List<AgendamentoViewModel> Agendamentos { get; } = new();
 
     private IEnumerable<DosadorJoinUsuarioDosadorViewModel> Dosadores { get; set; }
         = Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+
+    private StateMessage AgendamentosListState = StateMessage.None;
 
     [Parameter]
     public Guid IdDosador { get; set; } = Guid.Empty;
@@ -141,7 +158,7 @@
 
         IdDosador = Dosadores.FirstOrDefault()?.IdDosador ?? default;
 
-        Agendamentos = await GetAgendamentos(IdDosador);
+        await UpdateAgendamentoList();
     }
 
     private void OpenModalOptionsAgendamento(int id)
@@ -156,7 +173,7 @@
         _nav.NavigateTo($"/agendamentos/create/{IdDosador.ToString()}");
     }
 
-    private void CloseModalOptionsAgendamento()
+    private void CloseModalCreateAgendamento()
     {
         Guid idDosador;
         if (IdDosadorToCreate != default)
@@ -221,10 +238,50 @@
         }
     }
 
+    private async Task Create(CreateAgendamentoViewModel createAgendamentoViewModel)
+    {
+        const string POST = "/api/agendamento";
+
+        CreateErrors.Clear();
+
+        try
+        {
+            createAgendamentoViewModel.IdDosador = IdDosadorToCreate;
+            using var response = await _client.PostAsJsonAsync(POST, createAgendamentoViewModel);
+
+            var errors = await response.TryGetErrors();
+
+            if (errors.ContainsError)
+            {
+                CreateErrors.AddRange(errors.ErrorsMessages);
+                return;
+            }
+
+            CloseModalCreateAgendamento();
+            Successes.Add("Agendamento criado com sucesso.");
+            await UpdateAgendamentoList();
+        }
+        catch
+        {
+            CreateErrors.Add("Falha ao criar agendamento.");
+        }
+    }
+
+    private async Task UpdateAgendamentoList()
+    {
+        AgendamentosListState = StateMessage.Sending;
+
+        Agendamentos.Clear();
+
+        Agendamentos.AddRange(await GetAgendamentos(IdDosador));
+
+        AgendamentosListState = StateMessage.Sent;
+    }
+
     private static string GetDaySummaryOfWeek(int day)
     {
         _dayOfWeek.TryGetValue(day, out string? value);
 
-        return value;
+        return value ?? string.Empty;
     }
 }
