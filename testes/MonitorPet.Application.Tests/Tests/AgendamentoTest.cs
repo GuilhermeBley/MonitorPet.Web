@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using MonitorPet.Application.Model.Agendamento;
 using MonitorPet.Application.Services.Interfaces;
+using MonitorPet.Core.Exceptions;
 
 namespace MonitorPet.Application.Tests.Tests;
 
@@ -158,8 +159,8 @@ public class AgendamentoTest : TestBase
             QtdeLiberadaGr = agendamentoCreated.QtdeLiberadaGr
         };
 
-        Assert.NotNull(
-            await agendamentoService.UpdateById(agendamentoCreated.Id, updateDosador));
+        await Assert.ThrowsAnyAsync<ConflictCoreException>(
+            () => agendamentoService.UpdateById(agendamentoCreated.Id, updateDosador));
     }
 
     [Fact]

@@ -159,7 +159,7 @@ public class AgendamentoService : IAgendamentoService
     {
         var agendamentos = await _agendamentoRepository.GetByDosador(idDosador);
 
-        ThrowIfContainsSameDate(toCheck.DiaSemana, toCheck.HoraAgendada, agendamentos, ignoreAgendamentoIds);
+        ThrowIfContainsSameDate(toCheck.DiaSemana, toCheck.HoraAgendada, agendamentos);
     }
 
     private static DayOfWeek? TryGetDayOfWeek(int dayOfWeekInteger)

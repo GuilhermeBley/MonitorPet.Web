@@ -27,16 +27,18 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Editar agendamento</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="(()=>CloseModalCreateAgendamento())">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="(()=>ReturnToHomeDosadorAgendamento())">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <EditFormAgendamentoComponent>
+                        <ErrorComponent Errors="UpdateErrors"></ErrorComponent>
+                        <EditFormAgendamentoComponent OnValid="(async (model) => await UpdateAgendamento(model))"
+                                                  CreateModel="CreateByCurrentAgendamento()">
                             <Footer>
                                 <div class="modal-footer">
                                     <button type="submit" class="btn btn-primary">Salvar</button>
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="(()=>CloseModalCreateAgendamento())">Fechar</button>
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="(()=>ReturnToHomeDosadorAgendamento())">Fechar</button>
                                 </div>
                             </Footer>
                         </EditFormAgendamentoComponent>
@@ -52,18 +54,17 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Criar novo agendamento</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="(()=>CloseModalCreateAgendamento())">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="(()=>ReturnToHomeDosadorAgendamento())">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
                         <ErrorComponent Errors="CreateErrors"></ErrorComponent>
-                        <EditFormAgendamentoComponent
-                            OnValid="(async (model)=> await Create(model))">
+                        <EditFormAgendamentoComponent OnValid="(async (model)=> await Create(model))">
                             <Footer>
                                 <div class="modal-footer">
                                     <button type="submit" class="btn btn-primary">Adicionar</button>
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="(()=>CloseModalCreateAgendamento())">Fechar</button>
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="(()=>ReturnToHomeDosadorAgendamento())">Fechar</button>
                                 </div>
                             </Footer>
                         </EditFormAgendamentoComponent>
@@ -106,7 +107,7 @@
                         </div>
                         @agendamento.HoraAgendada.ToString(@"hh\:mm") - @GetDaySummaryOfWeek(agendamento.DiaSemana)
                     </div>
-                    <button type="button" class="btn btn-outline-secondary" 
+                    <button type="button" class="btn btn-outline-secondary"
                         @onclick="(()=>OpenModalOptionsAgendamento(agendamento.Id))"
                         disabled="@(IdDosador==default)">
                         <i class="fa-solid fa-pen-to-square"></i>
@@ -127,7 +128,7 @@
             {4, "Quinta"},
             {5, "Sexta"},
             {6, "Sábado"},
-                };
+                        };
 
     private string? ClassUpdateModalCss => IdDosador == default || Id == default ? null : "d-block";
     private string? ClassCreateModalCss => IdDosadorToCreate == default ? null : "d-block";
@@ -173,7 +174,7 @@
         _nav.NavigateTo($"/agendamentos/create/{IdDosador.ToString()}");
     }
 
-    private void CloseModalCreateAgendamento()
+    private void ReturnToHomeDosadorAgendamento()
     {
         Guid idDosador;
         if (IdDosadorToCreate != default)
@@ -257,8 +258,44 @@
                 return;
             }
 
-            CloseModalCreateAgendamento();
+            ReturnToHomeDosadorAgendamento();
             Successes.Add("Agendamento criado com sucesso.");
+            await UpdateAgendamentoList();
+        }
+        catch
+        {
+            CreateErrors.Add("Falha ao criar agendamento.");
+        }
+    }
+
+    private async Task UpdateAgendamento(CreateAgendamentoViewModel createAgendamentoViewModel)
+    {
+        const string POST = "/api/agendamento/{id}";
+
+        UpdateErrors.Clear();
+
+        try
+        {
+            var updateDosador = new UpdateAgendamentoViewModel
+                {
+                    Ativado = true,
+                    DiaSemana = createAgendamentoViewModel.DiaSemana,
+                    HoraAgendada = createAgendamentoViewModel.HoraAgendada,
+                    QtdeLiberadaGr = createAgendamentoViewModel.QtdeLiberadaGr
+                };
+            using var response = await _client.PutAsJsonAsync(
+                POST.Replace("{id}", Id.ToString()), updateDosador);
+
+            var errors = await response.TryGetErrors();
+
+            if (errors.ContainsError)
+            {
+                UpdateErrors.AddRange(errors.ErrorsMessages);
+                return;
+            }
+
+            ReturnToHomeDosadorAgendamento();
+            Successes.Add("Agendamento atualizado com sucesso.");
             await UpdateAgendamentoList();
         }
         catch
@@ -276,6 +313,22 @@
         Agendamentos.AddRange(await GetAgendamentos(IdDosador));
 
         AgendamentosListState = StateMessage.Sent;
+    }
+
+    private CreateAgendamentoViewModel CreateByCurrentAgendamento()
+    {
+        var agendamentoFound = Agendamentos.FirstOrDefault(a => a.Id == Id);
+
+        if (agendamentoFound is null)
+            return new();
+
+        return new()
+            {
+                DiaSemana = agendamentoFound.DiaSemana,
+                HoraAgendada = agendamentoFound.HoraAgendada,
+                IdDosador = IdDosador,
+                QtdeLiberadaGr = agendamentoFound.QtdeLiberadaGr
+            };
     }
 
     private static string GetDaySummaryOfWeek(int day)

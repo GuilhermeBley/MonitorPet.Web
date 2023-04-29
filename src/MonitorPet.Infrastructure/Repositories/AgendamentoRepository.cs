@@ -66,7 +66,7 @@ internal class AgendamentoRepository : RepositoryBase, IAgendamentoRepository
     public async Task<AgendamentoModel?> UpdateByIdOrDefault(int id, Agendamento entity)
     {
         return await _connection
-            .QueryFirstOrDefaultAsync(
+            .QueryFirstOrDefaultAsync<AgendamentoModel>(
             @"UPDATE monitorpet.agendamento SET IdDosador = @IdDosador, DiaSemana = @DiaSemana, 
                 HoraAgendada = @HoraAgendada, QtdeLiberadaGr = @QtdeLiberadaGr, Ativado = @Ativado WHERE (Id = @Id);
             SELECT Id, IdDosador, DiaSemana, HoraAgendada, QtdeLiberadaGr, Ativado from monitorpet.agendamento

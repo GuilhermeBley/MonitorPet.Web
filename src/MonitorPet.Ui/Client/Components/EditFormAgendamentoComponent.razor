@@ -19,14 +19,14 @@
         <select class="form-control text-center" id="select-hour" @onchange="((e)=>ChangeHourValue(e.Value as string))">
             @for (int hour = 0; hour < 24; hour++)
             {
-                <option value="@hour" selected="@(hour==_hour)">@hour.ToString().PadLeft(2, '0')</option>
+                <option value="@hour" selected="@(hour==CreateModel.HoraAgendada.Hours)">@hour.ToString().PadLeft(2, '0')</option>
             }
         </select>
         <span class="input-group-text"> : </span>
         <select class="form-control text-center" id="select-minute" @onchange="((e)=>ChangeMinuteValue(e.Value as string))">
-            @for (int minute = 0; minute < 24; minute++)
+            @for (int minute = 0; minute < 60; minute++)
             {
-                <option value="@minute" selected="@(minute==_hour)">@minute.ToString().PadLeft(2, '0')</option>
+                <option value="@minute" selected="@(minute==CreateModel.HoraAgendada.Minutes)">@minute.ToString().PadLeft(2, '0')</option>
             }
         </select>
     </div>
@@ -51,9 +51,6 @@
             {5, "Sexta"},
             {6, "Sábado"},
                             };
-
-    private int _hour;
-    private int _minute;
 
     [Parameter]
     public CreateAgendamentoViewModel CreateModel { get; set; } = new();
