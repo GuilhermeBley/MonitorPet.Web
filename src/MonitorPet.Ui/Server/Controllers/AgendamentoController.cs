@@ -47,7 +47,7 @@ public class AgendamentoController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<AgendamentoViewModel>> PostNewAgendamento(int id)
+    public async Task<ActionResult<AgendamentoViewModel>> GetById(int id)
     {
         var agendamentoDeleted = await _agendamentoService.DeleteById(id);
 
