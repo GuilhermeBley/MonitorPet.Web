@@ -116,12 +116,12 @@ public class AgendamentoService : IAgendamentoService
 
         await ThrowIfAgendamentoDuplicated(entityToUpdate, agendamentoFound.IdDosador, ignoreAgendamentoIds: agendamentoFound.Id);
 
-        var agendamentoDeleted = await _agendamentoRepository.UpdateByIdOrDefault(agendamentoFound.Id, entityToUpdate)
+        var agendamentoUpdated = await _agendamentoRepository.UpdateByIdOrDefault(agendamentoFound.Id, entityToUpdate)
             ?? throw new Core.Exceptions.NotFoundCoreException("Agendamento não encontrado.");
 
         await transaction.SaveChangesAsync();
 
-        return agendamentoDeleted;
+        return agendamentoUpdated;
     }
 
     /// <summary>
@@ -159,7 +159,7 @@ public class AgendamentoService : IAgendamentoService
     {
         var agendamentos = await _agendamentoRepository.GetByDosador(idDosador);
 
-        ThrowIfContainsSameDate(toCheck.DiaSemana, toCheck.HoraAgendada, agendamentos);
+        ThrowIfContainsSameDate(toCheck.DiaSemana, toCheck.HoraAgendada, agendamentos, ignoreAgendamentoIds);
     }
 
     private static DayOfWeek? TryGetDayOfWeek(int dayOfWeekInteger)

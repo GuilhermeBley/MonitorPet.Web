@@ -159,8 +159,8 @@ public class AgendamentoTest : TestBase
             QtdeLiberadaGr = agendamentoCreated.QtdeLiberadaGr
         };
 
-        await Assert.ThrowsAnyAsync<ConflictCoreException>(
-            () => agendamentoService.UpdateById(agendamentoCreated.Id, updateDosador));
+        Assert.NotNull(
+            await agendamentoService.UpdateById(agendamentoCreated.Id, updateDosador));
     }
 
     [Fact]
