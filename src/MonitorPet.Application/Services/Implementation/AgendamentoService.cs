@@ -67,6 +67,23 @@ public class AgendamentoService : IAgendamentoService
         return agendamentoDeleted;
     }
 
+    public async Task<AgendamentoModel> GetById(int id)
+    {
+        var user = await _contextClaim.GetRequiredCurrentClaim();
+        
+        if (id < 1)
+            throw new Core.Exceptions.CommonCoreException("Id inválido.");
+
+        using var connection = await _uoW.OpenConnectionAsync();
+
+        var agendamentoFound = await _agendamentoRepository.GetByIdOrDefault(id)
+            ?? throw new Core.Exceptions.NotFoundCoreException("Agendamento não encontrado.");
+
+        await ThrowIfCannotAccessDosador(user.RequiredIdUser, agendamentoFound.IdDosador);
+
+        return agendamentoFound;
+    }
+
     public async Task<IEnumerable<AgendamentoModel>> GetByDosador(string idDosador)
     {
         var user = await _contextClaim.GetRequiredCurrentClaim();
@@ -88,23 +105,23 @@ public class AgendamentoService : IAgendamentoService
         if (id < 1)
             throw new Core.Exceptions.CommonCoreException("Id inválido.");
 
-        var entityToUpdate = MapUpdateAgendamentoModel(updateAgendamentoModel);
-
         using var transaction = await _uoW.BeginTransactionAsync();
 
         var agendamentoFound = await _agendamentoRepository.GetByIdOrDefault(id)
             ?? throw new Core.Exceptions.NotFoundCoreException("Agendamento não encontrado.");
 
+        var entityToUpdate = MapUpdateAgendamentoModel(updateAgendamentoModel, agendamentoFound.IdDosador);
+
         await ThrowIfCannotAccessDosador(user.RequiredIdUser, agendamentoFound.IdDosador);
 
         await ThrowIfAgendamentoDuplicated(entityToUpdate, agendamentoFound.IdDosador, ignoreAgendamentoIds: agendamentoFound.Id);
 
-        var agendamentoDeleted = await _agendamentoRepository.UpdateByIdOrDefault(agendamentoFound.Id, entityToUpdate)
+        var agendamentoUpdated = await _agendamentoRepository.UpdateByIdOrDefault(agendamentoFound.Id, entityToUpdate)
             ?? throw new Core.Exceptions.NotFoundCoreException("Agendamento não encontrado.");
 
         await transaction.SaveChangesAsync();
 
-        return agendamentoDeleted;
+        return agendamentoUpdated;
     }
 
     /// <summary>
@@ -127,12 +144,12 @@ public class AgendamentoService : IAgendamentoService
         return Agendamento.CreateActivated(create.IdDosador, dayOfWeek, create.HoraAgendada, create.QtdeLiberadaGr);
     }
 
-    private static Agendamento MapUpdateAgendamentoModel(UpdateAgendamentoModel update)
+    private static Agendamento MapUpdateAgendamentoModel(UpdateAgendamentoModel update, Guid idDosador)
     {
         var dayOfWeek = TryGetDayOfWeek(update.DiaSemana)
             ?? throw new Core.Exceptions.CommonCoreException("Dia da semana inválido.");
 
-        return Agendamento.Create(update.IdDosador, dayOfWeek, update.HoraAgendada, update.QtdeLiberadaGr, update.Ativado);
+        return Agendamento.Create(idDosador, dayOfWeek, update.HoraAgendada, update.QtdeLiberadaGr, update.Ativado);
     }
 
     /// <summary>
@@ -159,15 +176,15 @@ public class AgendamentoService : IAgendamentoService
         }
     }
 
-    private static void ThrowIfContainsSameDate(int weekDay, TimeOnly time, IEnumerable<AgendamentoModel> agendamentosToCheck, params int[] ignoreAgendamentoIds)
+    private static void ThrowIfContainsSameDate(int weekDay, TimeSpan time, IEnumerable<AgendamentoModel> agendamentosToCheck, params int[] ignoreAgendamentoIds)
     {
         var agendamentosIgnoredIds = agendamentosToCheck.Where(a => !ignoreAgendamentoIds.Contains(a.Id));
 
         var containsDuplicated = agendamentosIgnoredIds
             .Any(a =>
                 a.DiaSemana == weekDay &&
-                a.HoraAgendada.Hour == time.Hour &&
-                a.HoraAgendada.Minute == time.Minute
+                a.HoraAgendada.Hours == time.Hours &&
+                a.HoraAgendada.Minutes == time.Minutes
             );
 
         if (containsDuplicated)

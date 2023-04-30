@@ -31,7 +31,7 @@ public class AgendamentoTest
     private static Agendamento Create(
         Guid? idDosador = null,
         DayOfWeek dayOfWeek = default,
-        TimeOnly hour = default,
+        TimeSpan hour = default,
         double quantity = 1)
     {
         if (idDosador is null)

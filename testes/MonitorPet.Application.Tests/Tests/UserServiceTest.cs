@@ -109,38 +109,6 @@ public class UserServiceTest : TestBase
     }
 
     [Fact]
-    public async Task LoginDosador_LoginLinkedDosador_Success()
-    {
-        var dosadorService = ServiceProvider.GetRequiredService<IDosadorService>();
-        var userService = ServiceProvider.GetRequiredService<IUserService>();
-        var tupleUserCreated = await CreateAndLoginUser();
-
-        using var contextClaim = CreateContext(tupleUserCreated.Claims);
-
-        var newDosador = await CreateDosador();
-
-        await dosadorService
-                .AddDosadorToUser(contextClaim.ClaimModel.RequiredIdUser, newDosador.IdDosador.ToString());
-        
-        Assert.NotEmpty(
-            await userService.LoginDosador(contextClaim.ClaimModel.RequiredIdUser, newDosador.IdDosador)
-        );
-    }
-
-    [Fact]
-    public async Task LoginDosador_LoginUnlinkedDosador_FailedToLogin()
-    {
-        var userService = ServiceProvider.GetRequiredService<IUserService>();
-        var tupleUserCreated = await CreateAndLoginUser();
-
-        using var contextClaim = CreateContext(tupleUserCreated.Claims);
-
-        await Assert.ThrowsAnyAsync<Core.Exceptions.ForbiddenCoreException>(
-            () => userService.LoginDosador(contextClaim.ClaimModel.RequiredIdUser, Guid.NewGuid())
-        );
-    }
-
-    [Fact]
     public async Task SendEmailChangePassword_SendEmailChangePassword_SuccessSent()
     {
         var scooped = ServiceProvider;

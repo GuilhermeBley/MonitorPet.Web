@@ -27,11 +27,13 @@ public static class ServicesExtensions
         => serviceCollection
             .AddScoped<Application.Repositories.IDosadorRepository, Infrastructure.Repositories.DosadorRepository>()
             .AddScoped<Application.Repositories.IUserRepository, Infrastructure.Repositories.UserRepository>()
+            .AddScoped<Application.Repositories.IAgendamentoRepository, Infrastructure.Repositories.AgendamentoRepository>()
             .AddScoped<Application.Repositories.IUsuarioDosadorRepository, Infrastructure.Repositories.UsuarioDosadorRepository>();
 
     private static IServiceCollection AddServices(this IServiceCollection serviceCollection)
         => serviceCollection
             .AddScoped<Application.Services.Interfaces.IUserService, Application.Services.Implementation.UserService>()
+            .AddScoped<Application.Services.Interfaces.IAgendamentoService, Application.Services.Implementation.AgendamentoService>()
             .AddScoped<Application.Services.Interfaces.IDosadorService, Application.Services.Implementation.DosadorService>();
 
 

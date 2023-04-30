@@ -139,27 +139,6 @@ public class UserService : IUserService
         return CreateResultLogin(userByLogin);
     }
 
-    public async Task<Claim[]> LoginDosador(int idUser, Guid idDosador)
-    {
-        if (idDosador == default)
-            throw new Core.Exceptions.CommonCoreException("Invalid id dosador.");
-
-        var currentClaims = await _contextClaim.GetRequiredCurrentClaim();
-
-        if (currentClaims.RequiredIdUser != idUser)
-            throw new Core.Exceptions.UnauthorizedCoreException("Usuário não autorizado.");
-
-        using var connection = await _uoW.OpenConnectionAsync();
-
-        var dosadorFound =
-            await _usuarioDosadorRepository.GetByIdUserAndIdDosador(idUser, idDosador)
-            ?? throw new Core.Exceptions.ForbiddenCoreException("Usuário não pode acessar dosador.");
-
-        return AddOrUpdateClaimIdDosador(
-            dosadorFound.IdDosador.ToString(),
-            currentClaims.Claims);
-    }
-
     public async Task SendAgainEmailConfirmAccount(string email)
     {
         if (string.IsNullOrWhiteSpace(email))

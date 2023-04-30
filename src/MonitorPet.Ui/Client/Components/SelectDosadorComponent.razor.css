@@ -1,0 +1,13 @@
+﻿.btn-group {
+    margin-bottom: 4rem;
+}
+
+.btn {
+    border: 0;
+}
+
+img {
+    border-radius: 50%;
+    height: 100px !important;
+    width: 100px !important;
+}

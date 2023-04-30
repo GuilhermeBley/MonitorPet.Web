@@ -1,0 +1,87 @@
+﻿@using MonitorPet.Ui.Shared.Model.Agendamento
+
+<EditForm Model="CreateModel" OnValidSubmit="(async()=>await OnValid.InvokeAsync(CreateModel))">
+    <div class="input-group mb-2 text-center">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="form-select-day">Dia da semana</label>
+        </div>
+        <select class="form-control" id="form-select-day" @onchange="((e)=>ChangeDayValue(e.Value as string))">
+            @foreach (var day in _dayOfWeek)
+            {
+                <option value="@day.Key" selected="@(day.Key==CreateModel.DiaSemana)">@day.Value</option>
+            }
+        </select>
+    </div>
+    <div class="input-group mb-2 text-center">
+        <div class="input-group-prepend">
+            <label class="input-group-text" for="select-hour">Hora e minuto</label>
+        </div>
+        <select class="form-control text-center" id="select-hour" @onchange="((e)=>ChangeHourValue(e.Value as string))">
+            @for (int hour = 0; hour < 24; hour++)
+            {
+                <option value="@hour" selected="@(hour==CreateModel.HoraAgendada.Hours)">@hour.ToString().PadLeft(2, '0')</option>
+            }
+        </select>
+        <span class="input-group-text"> : </span>
+        <select class="form-control text-center" id="select-minute" @onchange="((e)=>ChangeMinuteValue(e.Value as string))">
+            @for (int minute = 0; minute < 60; minute++)
+            {
+                <option value="@minute" selected="@(minute==CreateModel.HoraAgendada.Minutes)">@minute.ToString().PadLeft(2, '0')</option>
+            }
+        </select>
+    </div>
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <div class="input-group-text">Quantidade de ração</div>
+        </div>
+        <InputNumber class="form-control" @bind-Value="CreateModel.QtdeLiberadaGr"/>
+    </div>
+
+    @Footer
+</EditForm>
+
+@code {
+    private static Dictionary<int, string> _dayOfWeek { get; }
+        = new Dictionary<int, string>(){
+            {0, "Domingo"},
+            {1, "Segunda"},
+            {2, "Terça"},
+            {3, "Quarta"},
+            {4, "Quinta"},
+            {5, "Sexta"},
+            {6, "Sábado"},
+                            };
+
+    [Parameter]
+    public CreateAgendamentoViewModel CreateModel { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<CreateAgendamentoViewModel> OnValid { get; set; }
+
+    [Parameter]
+    public RenderFragment? Footer { get; set; }
+
+    private void ChangeDayValue(string? day)
+    {
+        if (!int.TryParse(day, out int dayInteger))
+            return;
+
+        CreateModel.DiaSemana = dayInteger;
+    }
+
+    private void ChangeHourValue(string? hour)
+    {
+        if (!int.TryParse(hour, out int hourInteger))
+            return;
+
+        CreateModel.HoraAgendada = new TimeSpan(hourInteger, CreateModel.HoraAgendada.Minutes, 0);
+    }
+
+    private void ChangeMinuteValue(string? minute)
+    {
+        if (!int.TryParse(minute, out int minuteInteger))
+            return;
+
+        CreateModel.HoraAgendada = new TimeSpan(CreateModel.HoraAgendada.Hours, minuteInteger, 0);
+    }
+}

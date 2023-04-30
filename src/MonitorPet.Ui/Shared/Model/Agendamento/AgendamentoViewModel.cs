@@ -1,7 +1,9 @@
-﻿namespace MonitorPet.Application.Model.Agendamento;
+﻿namespace MonitorPet.Ui.Shared.Model.Agendamento;
 
-public class UpdateAgendamentoModel
+public class AgendamentoViewModel
 {
+    public int Id { get; set; }
+    public Guid IdDosador { get; set; }
     public int DiaSemana { get; set; }
     public TimeSpan HoraAgendada { get; set; }
     public double QtdeLiberadaGr { get; set; }

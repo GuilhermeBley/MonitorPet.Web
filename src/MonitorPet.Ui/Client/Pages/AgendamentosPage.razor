@@ -1,0 +1,431 @@
+﻿@page "/agendamentos"
+@page "/agendamentos/{IdDosador:guid}"
+@page "/agendamentos/{IdDosador:guid}/{Id:int}"
+@page "/agendamentos/create/{IdDosadorToCreate:guid}"
+
+@using MonitorPet.Ui.Client.Services
+@using MonitorPet.Ui.Shared.Model.Agendamento
+@using MonitorPet.Ui.Shared.Model.Dosador
+
+@inject HttpClient _client
+@inject UserInfoService _userInfo
+@inject NavigationManager _nav
+
+<div class="container-md h-100">
+
+    @if (Dosadores.Any())
+    {
+        <SelectDosadorComponent Dosadores="Dosadores"
+                            OnChangeDosador="(async (model)=> await ChangeDosador(model))">
+        </SelectDosadorComponent>
+    }
+
+    @if (IdDosadorToCreate == default)
+    {
+        <div class="modal @ClassUpdateModalCss" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Editar agendamento</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="(()=>ReturnToHomeDosadorAgendamento())">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <ErrorComponent Errors="UpdateErrors"></ErrorComponent>
+                        <EditFormAgendamentoComponent OnValid="(async (model) => await UpdateAgendamento(model))"
+                                                  CreateModel="CreateByCurrentAgendamento()">
+                            <Footer>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">Salvar</button>
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="(()=>ReturnToHomeDosadorAgendamento())">Fechar</button>
+                                </div>
+                            </Footer>
+                        </EditFormAgendamentoComponent>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="modal @ClassCreateModalCss" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Criar novo agendamento</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="(()=>ReturnToHomeDosadorAgendamento())">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <ErrorComponent Errors="CreateErrors"></ErrorComponent>
+                        <EditFormAgendamentoComponent OnValid="(async (model)=> await Create(model))">
+                            <Footer>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">Adicionar</button>
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="(()=>ReturnToHomeDosadorAgendamento())">Fechar</button>
+                                </div>
+                            </Footer>
+                        </EditFormAgendamentoComponent>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(ClassUpdateModalCss) || !string.IsNullOrEmpty(ClassCreateModalCss))
+    {
+        <div class="modal-backdrop fade show"></div>
+    }
+
+    <ErrorComponent Errors="Errors"></ErrorComponent>
+    <SuccessComponent Successes="Successes"></SuccessComponent>
+
+    <div class="schedule-time input-group">
+        <h1 class="text-primary"><i class="fa-solid fa-alarm-clock"></i> Agendamentos</h1>
+        <button type="button" class="btn btn-outline-success border-0 ms-auto"
+                @onclick="OpenModalCreateAgendamento" disabled="@(IdDosador==default)">
+            <span class="text-complete">Novo agendamento  </span><i class="fa-sharp fa-solid fa-plus"></i>
+        </button>
+    </div>
+    <hr>
+    <div class="row justify-content-center">
+
+        @if (AgendamentosListState == StateMessage.Sending)
+        {
+            <LoadComponent></LoadComponent>
+        }
+
+        @foreach (var agendamento in Agendamentos)
+        {
+            <div class="col-md-4">
+                <div class="schedule-time input-group">
+                    <div class="input-group-text">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="@agendamento.Id" checked="@agendamento.Ativado"
+                               @onchange="(async () => await ToggleActiveAgendamento(agendamento.Id))">
+                        </div>
+                        @agendamento.HoraAgendada.ToString(@"hh\:mm") - @GetDaySummaryOfWeek(agendamento.DiaSemana)
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary rounded-0 h-100" type="button" data-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-ellipsis"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#" @onclick:preventDefault
+                           @onclick="(()=>OpenModalOptionsAgendamento(agendamento.Id))"
+                           disabled="@(IdDosador==default)">
+                                <i class="fa-solid fa-pen-to-square"></i> Editar
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#" @onclick:preventDefault
+                           @onclick="(()=>DeleteAgendamento(agendamento.Id))"
+                           disabled="@(IdDosador==default)">
+                                <i class="fa-solid fa-eraser"></i> Excluir
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private static Dictionary<int, string> _dayOfWeek { get; }
+        = new Dictionary<int, string>(){
+            {0, "Domingo"},
+            {1, "Segunda"},
+            {2, "Terça"},
+            {3, "Quarta"},
+            {4, "Quinta"},
+            {5, "Sexta"},
+            {6, "Sábado"},
+                                            };
+
+    private string? ClassUpdateModalCss => IdDosador == default || Id == default ? null : "d-block";
+    private string? ClassCreateModalCss => IdDosadorToCreate == default ? null : "d-block";
+
+    private List<string> Errors { get; } = new();
+    private List<string> CreateErrors { get; } = new();
+    private List<string> UpdateErrors { get; } = new();
+    private List<string> Successes { get; } = new();
+    private List<AgendamentoViewModel> Agendamentos { get; } = new();
+
+    private IEnumerable<DosadorJoinUsuarioDosadorViewModel> Dosadores { get; set; }
+        = Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+
+    private StateMessage AgendamentosListState = StateMessage.None;
+
+    [Parameter]
+    public Guid IdDosador { get; set; } = Guid.Empty;
+
+    [Parameter]
+    public Guid IdDosadorToCreate { get; set; } = Guid.Empty;
+
+    [Parameter]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Dosadores = await GetDosadores();
+
+        IdDosador = Dosadores.FirstOrDefault()?.IdDosador ?? default;
+
+        await UpdateAgendamentoList();
+    }
+
+    private void OpenModalOptionsAgendamento(int id)
+    {
+        Id = id;
+        _nav.NavigateTo($"/agendamentos/{IdDosador.ToString()}/{Id}");
+    }
+
+    private void OpenModalCreateAgendamento()
+    {
+        IdDosadorToCreate = IdDosador;
+        _nav.NavigateTo($"/agendamentos/create/{IdDosador.ToString()}");
+    }
+
+    private void ReturnToHomeDosadorAgendamento()
+    {
+        Guid idDosador;
+        if (IdDosadorToCreate != default)
+            idDosador = IdDosadorToCreate;
+        else
+            idDosador = IdDosador;
+
+        Id = 0;
+        IdDosadorToCreate = default;
+
+        _nav.NavigateTo($"/agendamentos/{idDosador.ToString()}");
+    }
+
+    private async Task<IEnumerable<AgendamentoViewModel>> GetAgendamentos(Guid idDosador)
+    {
+        const string URI_GET = "/api/agendamento/dosador/{idDosador}";
+
+        try
+        {
+            using var response = await _client.GetAsync(
+                URI_GET.Replace("{idDosador}", idDosador.ToString()));
+
+            var errors = await response.TryGetErrors();
+
+            if (errors.ContainsError)
+            {
+                Errors.AddRange(errors.ErrorsMessages);
+                return Enumerable.Empty<AgendamentoViewModel>();
+            }
+
+            return (await response.Content.ReadFromJsonAsync<IEnumerable<AgendamentoViewModel>>())
+                ?.OrderBy(a => a.DiaSemana)
+                ?? Enumerable.Empty<AgendamentoViewModel>();
+        }
+        catch
+        {
+            return Enumerable.Empty<AgendamentoViewModel>();
+        }
+    }
+
+    private async Task<IEnumerable<DosadorJoinUsuarioDosadorViewModel>> GetDosadores()
+    {
+        try
+        {
+            using var response = await _client.GetAsync("/api/dosador/all");
+
+            var errorsResponse = await response.TryGetErrors();
+
+            if (errorsResponse.ContainsError)
+            {
+                Errors.Add("Falha em coleta de dosadores.");
+                return Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>(); ;
+            }
+
+            return await response.Content.ReadFromJsonAsync<IEnumerable<DosadorJoinUsuarioDosadorViewModel>>()
+                ?? Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+        }
+        catch
+        {
+            Errors.Add("Falha em coleta de dosadores.");
+            return Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>(); ;
+        }
+    }
+
+    private async Task Create(CreateAgendamentoViewModel createAgendamentoViewModel)
+    {
+        const string POST = "/api/agendamento";
+
+        CreateErrors.Clear();
+        Successes.Clear();
+
+        try
+        {
+            createAgendamentoViewModel.IdDosador = IdDosadorToCreate;
+            using var response = await _client.PostAsJsonAsync(POST, createAgendamentoViewModel);
+
+            var errors = await response.TryGetErrors();
+
+            if (errors.ContainsError)
+            {
+                CreateErrors.AddRange(errors.ErrorsMessages);
+                return;
+            }
+
+            ReturnToHomeDosadorAgendamento();
+            Successes.Add("Agendamento criado com sucesso.");
+            await UpdateAgendamentoList();
+        }
+        catch
+        {
+            CreateErrors.Add("Falha ao criar agendamento.");
+        }
+    }
+
+    private async Task UpdateAgendamento(CreateAgendamentoViewModel createAgendamentoViewModel)
+    {
+        const string PUT = "/api/agendamento/{id}";
+
+        UpdateErrors.Clear();
+        Successes.Clear();
+
+        try
+        {
+            var updateAgendamento = new UpdateAgendamentoViewModel
+                {
+                    Ativado = true,
+                    DiaSemana = createAgendamentoViewModel.DiaSemana,
+                    HoraAgendada = createAgendamentoViewModel.HoraAgendada,
+                    QtdeLiberadaGr = createAgendamentoViewModel.QtdeLiberadaGr
+                };
+            using var response = await _client.PutAsJsonAsync(
+                PUT.Replace("{id}", Id.ToString()), updateAgendamento);
+
+            var errors = await response.TryGetErrors();
+
+            if (errors.ContainsError)
+            {
+                UpdateErrors.AddRange(errors.ErrorsMessages);
+                return;
+            }
+
+            ReturnToHomeDosadorAgendamento();
+            Successes.Add("Agendamento atualizado com sucesso.");
+            await UpdateAgendamentoList();
+        }
+        catch
+        {
+            CreateErrors.Add("Falha ao criar agendamento.");
+        }
+    }
+
+    private async Task UpdateAgendamentoList()
+    {
+        AgendamentosListState = StateMessage.Sending;
+
+        Agendamentos.Clear();
+
+        Agendamentos.AddRange(await GetAgendamentos(IdDosador));
+
+        AgendamentosListState = StateMessage.Sent;
+    }
+
+    private async Task DeleteAgendamento(int id)
+    {
+        const string DELETE = "api/agendamento/{id}";
+
+        Errors.Clear();
+        Successes.Clear();
+
+        try
+        {
+            var response = await _client.DeleteAsync(DELETE.Replace("{id}", id.ToString()));
+
+            var resultErrors = await response.TryGetErrors();
+
+            if (resultErrors.ContainsError)
+            {
+                Errors.AddRange(resultErrors.ErrorsMessages);
+                return;
+            }
+
+            await UpdateAgendamentoList();
+
+            Successes.Add("Agendamento deletado com sucesso.");
+        }
+        catch
+        {
+            Errors.Add("Falha em exclusão.");
+            return;
+        }
+    }
+
+    private CreateAgendamentoViewModel CreateByCurrentAgendamento()
+    {
+        var agendamentoFound = Agendamentos.FirstOrDefault(a => a.Id == Id);
+
+        if (agendamentoFound is null)
+            return new();
+
+        return new()
+            {
+                DiaSemana = agendamentoFound.DiaSemana,
+                HoraAgendada = agendamentoFound.HoraAgendada,
+                IdDosador = IdDosador,
+                QtdeLiberadaGr = agendamentoFound.QtdeLiberadaGr
+            };
+    }
+
+    private async Task ToggleActiveAgendamento(int idAgendamento)
+    {
+        const string PATCH = "/api/agendamento/{id}";
+
+        Errors.Clear();
+        Successes.Clear();
+
+        var agendamentoToPatch = Agendamentos.FirstOrDefault(a => a.Id == idAgendamento);
+
+        if (agendamentoToPatch is null)
+            return;
+
+        try
+        {
+            var patchAgendamento = new PatchAgendamentoViewModel
+                {
+                    Ativado = !agendamentoToPatch.Ativado
+                };
+            using var response = await _client.PatchAsync(
+                PATCH.Replace("{id}", idAgendamento.ToString()), JsonContent.Create(patchAgendamento));
+
+            var errors = await response.TryGetErrors();
+
+            if (errors.ContainsError)
+            {
+                Errors.AddRange(errors.ErrorsMessages);
+                return;
+            }
+
+            ReturnToHomeDosadorAgendamento();
+            await UpdateAgendamentoList();
+        }
+        catch
+        {
+            Errors.Add("Falha ao ativar/desativar.");
+        }
+    }
+
+    private async Task ChangeDosador(DosadorJoinUsuarioDosadorViewModel modelToChange)
+    {
+        IdDosador = modelToChange.IdDosador;
+
+        await UpdateAgendamentoList();
+    }
+
+    private static string GetDaySummaryOfWeek(int day)
+    {
+        _dayOfWeek.TryGetValue(day, out string? value);
+
+        return value ?? string.Empty;
+    }
+}
