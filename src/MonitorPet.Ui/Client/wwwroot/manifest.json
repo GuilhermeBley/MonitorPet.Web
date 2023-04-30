@@ -1,6 +1,6 @@
 {
-    "name": "ComponentsWebAssembly-CSharp",
-  "short_name": "ComponentsWebAssembly-CSharp",
+    "name": "Monitor Pet",
+  "short_name": "Monitor Pet",
   "id": "./",
   "start_url": "./",
   "display": "standalone",
