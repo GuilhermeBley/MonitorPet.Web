@@ -82,7 +82,7 @@
     <ErrorComponent Errors="Errors"></ErrorComponent>
     <SuccessComponent Successes="Successes"></SuccessComponent>
 
-    <div class="schedule-time input-group">
+    <div class="input-group">
         <h1 class="text-primary"><i class="fa-solid fa-alarm-clock"></i> Agendamentos</h1>
         <button type="button" class="btn btn-outline-success border-0 ms-auto"
                 @onclick="OpenModalCreateAgendamento" disabled="@(IdDosador==default)">
@@ -90,7 +90,7 @@
         </button>
     </div>
     <hr>
-    <div class="row justify-content-center">
+    <div class="row">
 
         @if (AgendamentosListState == StateMessage.Sending)
         {
@@ -99,31 +99,31 @@
 
         @foreach (var agendamento in Agendamentos)
         {
-            <div class="col-md-4">
+            <div class="col-md-4 text-center">
                 <div class="schedule-time input-group">
-                    <div class="input-group-text">
+                    <div class="input-group-text p-0 mx-auto ps-2">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="@agendamento.Id" checked="@agendamento.Ativado"
                                @onchange="(async () => await ToggleActiveAgendamento(agendamento.Id))">
+                            <label class="schedule-time-label custom-control-label mx-2" for="@agendamento.Id"> @agendamento.HoraAgendada.ToString(@"hh\:mm") - @GetDaySummaryOfWeek(agendamento.DiaSemana)</label>
                         </div>
-                        @agendamento.HoraAgendada.ToString(@"hh\:mm") - @GetDaySummaryOfWeek(agendamento.DiaSemana)
-                    </div>
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary rounded-0 h-100" type="button" data-toggle="dropdown" aria-expanded="false">
-                            <i class="fa-solid fa-ellipsis"></i>
-                        </button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="#" @onclick:preventDefault
-                           @onclick="(()=>OpenModalOptionsAgendamento(agendamento.Id))"
-                           disabled="@(IdDosador==default)">
-                                <i class="fa-solid fa-pen-to-square"></i> Editar
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="#" @onclick:preventDefault
-                           @onclick="(()=>DeleteAgendamento(agendamento.Id))"
-                           disabled="@(IdDosador==default)">
-                                <i class="fa-solid fa-eraser"></i> Excluir
-                            </a>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary rounded-0 h-100" type="button" data-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-ellipsis"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="#" @onclick:preventDefault
+                               @onclick="(()=>OpenModalOptionsAgendamento(agendamento.Id))"
+                               disabled="@(IdDosador==default)">
+                                    <i class="fa-solid fa-pen-to-square"></i> Editar
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" @onclick:preventDefault
+                               @onclick="(()=>DeleteAgendamento(agendamento.Id))"
+                               disabled="@(IdDosador==default)">
+                                    <i class="fa-solid fa-eraser"></i> Excluir
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -142,7 +142,7 @@
             {4, "Quinta"},
             {5, "Sexta"},
             {6, "Sábado"},
-                                            };
+                                                                        };
 
     private string? ClassUpdateModalCss => IdDosador == default || Id == default ? null : "d-block";
     private string? ClassCreateModalCss => IdDosadorToCreate == default ? null : "d-block";
