@@ -16,7 +16,7 @@
     @if (Dosadores.Any())
     {
         <SelectDosadorComponent Dosadores="Dosadores"
-                            OnChangeDosador="((d)=>IdDosador=d.IdDosador)">
+                            OnChangeDosador="(async (model)=> await ChangeDosador(model))">
         </SelectDosadorComponent>
     }
 
@@ -108,11 +108,24 @@
                         </div>
                         @agendamento.HoraAgendada.ToString(@"hh\:mm") - @GetDaySummaryOfWeek(agendamento.DiaSemana)
                     </div>
-                    <button type="button" class="btn btn-outline-secondary"
-                        @onclick="(()=>OpenModalOptionsAgendamento(agendamento.Id))"
-                        disabled="@(IdDosador==default)">
-                        <i class="fa-solid fa-pen-to-square"></i>
-                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary rounded-0 h-100" type="button" data-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-ellipsis"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#" @onclick:preventDefault
+                           @onclick="(()=>OpenModalOptionsAgendamento(agendamento.Id))"
+                           disabled="@(IdDosador==default)">
+                                <i class="fa-solid fa-pen-to-square"></i> Editar
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#" @onclick:preventDefault
+                           @onclick="(()=>DeleteAgendamento(agendamento.Id))"
+                           disabled="@(IdDosador==default)">
+                                <i class="fa-solid fa-eraser"></i> Excluir
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         }
@@ -129,7 +142,7 @@
             {4, "Quinta"},
             {5, "Sexta"},
             {6, "Sábado"},
-                            };
+                                            };
 
     private string? ClassUpdateModalCss => IdDosador == default || Id == default ? null : "d-block";
     private string? ClassCreateModalCss => IdDosadorToCreate == default ? null : "d-block";
@@ -245,6 +258,7 @@
         const string POST = "/api/agendamento";
 
         CreateErrors.Clear();
+        Successes.Clear();
 
         try
         {
@@ -274,6 +288,7 @@
         const string PUT = "/api/agendamento/{id}";
 
         UpdateErrors.Clear();
+        Successes.Clear();
 
         try
         {
@@ -316,6 +331,36 @@
         AgendamentosListState = StateMessage.Sent;
     }
 
+    private async Task DeleteAgendamento(int id)
+    {
+        const string DELETE = "api/agendamento/{id}";
+
+        Errors.Clear();
+        Successes.Clear();
+
+        try
+        {
+            var response = await _client.DeleteAsync(DELETE.Replace("{id}", id.ToString()));
+
+            var resultErrors = await response.TryGetErrors();
+
+            if (resultErrors.ContainsError)
+            {
+                Errors.AddRange(resultErrors.ErrorsMessages);
+                return;
+            }
+
+            await UpdateAgendamentoList();
+
+            Successes.Add("Agendamento deletado com sucesso.");
+        }
+        catch
+        {
+            Errors.Add("Falha em exclusão.");
+            return;
+        }
+    }
+
     private CreateAgendamentoViewModel CreateByCurrentAgendamento()
     {
         var agendamentoFound = Agendamentos.FirstOrDefault(a => a.Id == Id);
@@ -337,6 +382,7 @@
         const string PATCH = "/api/agendamento/{id}";
 
         Errors.Clear();
+        Successes.Clear();
 
         var agendamentoToPatch = Agendamentos.FirstOrDefault(a => a.Id == idAgendamento);
 
@@ -367,6 +413,13 @@
         {
             Errors.Add("Falha ao ativar/desativar.");
         }
+    }
+
+    private async Task ChangeDosador(DosadorJoinUsuarioDosadorViewModel modelToChange)
+    {
+        IdDosador = modelToChange.IdDosador;
+
+        await UpdateAgendamentoList();
     }
 
     private static string GetDaySummaryOfWeek(int day)
