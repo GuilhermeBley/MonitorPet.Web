@@ -1,4 +1,8 @@
-﻿.schedule-time {
+﻿.schedule-time-label {
+    width: 150px;
+}
+
+.schedule-time {
     margin-bottom: 2rem;
 }
 
