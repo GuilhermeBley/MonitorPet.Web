@@ -2,7 +2,7 @@
 
 namespace MonitorPet.Application.Repositories;
 
-internal interface IWeightHistoryRepository
+public interface IWeightHistoryRepository
 {
     Task<WeightHistoryModel?> GetByIdOrDefault(long id);
     IAsyncEnumerable<WeightHistoryModel> GetByDosador(Guid idDosador);
