@@ -88,12 +88,39 @@ public class ConsumptionService : IConsumptionService
 	/// <summary>
 	/// Needs a connection
 	/// </summary>
-	private async Task<IEnumerable<ConsumptionModel>> GetByInterval(Guid idDosador, DateTimeOffset start, DateTimeOffset end)
+	private async Task<IEnumerable<ConsumptionModel>> GetByInterval(
+        Guid idDosador, DateTimeOffset start, DateTimeOffset end, TimeSpan? interval = null, CancellationToken cancellationToken = default)
     {
+        if (interval is null)
+            interval = TimeSpan.FromHours(1);
+
         List<ConsumptionModel> consumptions = new();
         WeightHistoryModel? lastChecked = null;
+        
+        for (;start <= end; start = start.Add(interval.Value))
+        {
+            ConsumptionModel consumption = new (){ Start = start, End = start.Add(interval.Value) };
 
-        for (var startInt = start)
+            await foreach (var currentWeight in _weightHistoryRepository
+                .GetByDosadorAndInterval(idDosador, start, start.Add(interval.Value)).WithCancellation(cancellationToken))
+            {
+                if (lastChecked is null)
+                {
+                    lastChecked = currentWeight;
+                    continue;
+                }
 
+                if (currentWeight.Weight < lastChecked.Weight)
+                {
+                    lastChecked = currentWeight;
+                    consumption.QttConsumption += lastChecked.Weight - currentWeight.Weight;
+                    continue;
+                }
+            }
+
+            consumptions.Add(consumption);
+        }
+
+        return consumptions;
     }
 }
