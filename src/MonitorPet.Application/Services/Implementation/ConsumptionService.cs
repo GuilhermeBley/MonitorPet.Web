@@ -38,7 +38,7 @@ public class ConsumptionService : IConsumptionService
 
         var end = start.AddHours(24) > DateTimeOffset.Now ? DateTimeOffset.Now : start.AddHours(24);
 
-        var consumptions = await GetByInterval(idDosador, start, end);
+        var consumptions = await GetByInterval(idDosador, start, end, TimeSpan.FromHours(1));
 
         return new ConsumptionIntervalModel
         {
@@ -62,7 +62,7 @@ public class ConsumptionService : IConsumptionService
 
         var end = start.AddDays(7) > DateTimeOffset.Now ? DateTimeOffset.Now : start.AddDays(7);
 
-        var consumptions = await GetByInterval(idDosador, start, end);
+        var consumptions = await GetByInterval(idDosador, start, end, TimeSpan.FromDays(1));
 
         return new ConsumptionIntervalModel
         {
