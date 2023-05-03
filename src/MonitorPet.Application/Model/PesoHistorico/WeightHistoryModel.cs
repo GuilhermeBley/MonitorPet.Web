@@ -3,6 +3,6 @@
 public class WeightHistoryModel
 {
     public long Id { get; set; }
-    public long Weight { get; set; }
+    public double Weight { get; set; }
     public DateTimeOffset RegisteredAt { get; set; }
 }
