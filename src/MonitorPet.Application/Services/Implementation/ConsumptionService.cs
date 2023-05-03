@@ -113,7 +113,7 @@ public class ConsumptionService : IConsumptionService
                 if (currentWeight.Weight < lastChecked.Weight)
                 {
                     lastChecked = currentWeight;
-                    consumption.QttConsumption += lastChecked.Weight - currentWeight.Weight;
+                    consumption.QttConsumption += (lastChecked.Weight - currentWeight.Weight);
                     continue;
                 }
             }
