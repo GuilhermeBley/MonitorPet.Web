@@ -22,17 +22,17 @@ public class ConsumptionController : Controller
     }
 
     [HttpGet("day/{idDosador}/{start}")]
-    public async Task<ActionResult<ConsumptionIntervalViewModel>> GetConsumptionDay(Guid idDosador, DateTime start)
+    public async Task<ActionResult<ConsumptionIntervalViewModel>> GetConsumptionDay(Guid idDosador, DateTimeOffset start)
     {
-        var consumptions = await _consumptionService.GetDaily(idDosador, start.ToUniversalTime());
+        var consumptions = await _consumptionService.GetDaily(idDosador, start);
 
         return Ok(_map.Map<ConsumptionIntervalViewModel>(consumptions));
     }
 
     [HttpGet("week/{idDosador}/{start}")]
-    public async Task<ActionResult<ConsumptionIntervalViewModel>> GetConsumptionWeek(Guid idDosador, DateTime start)
+    public async Task<ActionResult<ConsumptionIntervalViewModel>> GetConsumptionWeek(Guid idDosador, DateTimeOffset start)
     {
-        var consumptions = await _consumptionService.GetWeekly(idDosador, start.ToUniversalTime());
+        var consumptions = await _consumptionService.GetWeekly(idDosador, start);
 
         return Ok(_map.Map<ConsumptionIntervalViewModel>(consumptions));
     }

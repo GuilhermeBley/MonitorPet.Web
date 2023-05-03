@@ -29,7 +29,7 @@ public class ConsumptionService : IConsumptionService
 	{
 		var context = await _contextClaim.GetRequiredCurrentClaim();
 
-		if (start > DateTimeOffset.Now)
+		if (start.Date > DateTime.UtcNow)
 			throw new Core.Exceptions.CommonCoreException("Data de início inválida.");
 
 		using var con = await _uoW.OpenConnectionAsync();
@@ -53,7 +53,7 @@ public class ConsumptionService : IConsumptionService
     {
         var context = await _contextClaim.GetRequiredCurrentClaim();
 
-        if (start > DateTimeOffset.Now)
+        if (start.Date > DateTime.UtcNow)
             throw new Core.Exceptions.CommonCoreException("Data de início inválida.");
 
         using var con = await _uoW.OpenConnectionAsync();

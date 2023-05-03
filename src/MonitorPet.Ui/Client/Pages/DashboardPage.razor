@@ -1,0 +1,181 @@
+﻿@page "/Dashboard"
+@page "/Dashboard/{IdDosador:guid}"
+@using ChartJs.Blazor
+@using ChartJs.Blazor.BarChart
+@using ChartJs.Blazor.Common
+@using ChartJs.Blazor.Util
+@using MonitorPet.Ui.Client.Services
+@using MonitorPet.Ui.Shared.Model.Dosador
+@using MonitorPet.Ui.Shared.Model.Exceptions
+@using MonitorPet.Ui.Shared.Model.PesoHistorico
+@using MonitorPet.Ui.Shared.Model.User
+
+@inject HttpClient _client
+@inject UserInfoService _userInfo
+@inject NavigationManager _nav
+
+<div class="container-md h-100">
+    <div class="row">
+        <div class="col"></div>
+        <div class="col-md-10">
+            <ErrorComponent Errors="Errors"></ErrorComponent>
+
+            @if (Dosadores.Any())
+            {
+                <SelectDosadorComponent Dosadores="Dosadores"
+                                    OnChangeDosador="(async (model)=> await ChangeDosador(model))">
+                </SelectDosadorComponent>
+            }
+
+            @if (_configDaily is not null)
+            {
+                <Chart Config="_configDaily" @ref="_chartDaily"></Chart>
+            }
+        </div>
+        <div class="col"></div>
+    </div>
+</div>
+
+@code {
+    private static readonly string[] _availableColors = new[]
+    {
+        ColorUtil.FromDrawingColor(System.Drawing.Color.Red),
+        ColorUtil.FromDrawingColor(System.Drawing.Color.Blue),
+        ColorUtil.FromDrawingColor(System.Drawing.Color.Green),
+        ColorUtil.FromDrawingColor(System.Drawing.Color.GreenYellow),
+    };
+
+    private BarConfig? _configDaily;
+    private Chart? _chartDaily;
+
+    private readonly DateTime _day = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0);
+    private readonly DateTime _week = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0).AddDays(-7);
+
+    private List<string> Errors { get; } = new();
+
+    private IEnumerable<DosadorJoinUsuarioDosadorViewModel> Dosadores { get; set; }
+        = Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+
+    [Parameter]
+    public Guid IdDosador { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Dosadores = await GetDosadores();
+
+        if (!Dosadores.Any())
+        {
+            return;
+        }
+
+        IdDosador = Dosadores.FirstOrDefault()?.IdDosador ?? default;
+
+        await UpdateDayDashboard();
+    }
+
+    private async Task<IEnumerable<DosadorJoinUsuarioDosadorViewModel>> GetDosadores()
+    {
+        try
+        {
+            using var response = await _client.GetAsync("/api/dosador/all");
+
+            var errorsResponse = await response.TryGetErrors();
+
+            if (errorsResponse.ContainsError)
+            {
+                Errors.Add("Falha em coleta de dosadores.");
+                return Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>(); ;
+            }
+
+            return await response.Content.ReadFromJsonAsync<IEnumerable<DosadorJoinUsuarioDosadorViewModel>>()
+                ?? Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+        }
+        catch
+        {
+            Errors.Add("Falha em coleta de dosadores.");
+            return Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>(); ;
+        }
+    }
+
+    private async Task<ConsumptionIntervalViewModel?> GetIntervalDayByIdDosador(Guid idDosador)
+    {
+        const string GET = "api/consumption/day/{idDosador}/{dateOffSet}";
+
+        try
+        {
+            using var response = await _client.GetAsync(
+                GET
+                .Replace("{idDosador}", idDosador.ToString())
+                .Replace("{dateOffSet}", _day.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss")));
+
+            var result = await response.TryGetErrors();
+
+            if (result.ContainsError)
+            {
+                Errors.AddRange(result.ErrorsMessages);
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<ConsumptionIntervalViewModel>();
+        }
+        catch
+        {
+            Errors.Add("Falha ao coletar relatório diário.");
+            return null;
+        }
+    }
+
+    private async Task ChangeDosador(DosadorJoinUsuarioDosadorViewModel modelToChange)
+    {
+        IdDosador = modelToChange.IdDosador;
+        await Task.CompletedTask;
+    }
+
+    private async Task UpdateDayDashboard()
+    {
+        _configDaily = null;
+
+        var interval = await GetIntervalDayByIdDosador(IdDosador);
+
+        if (interval is null)
+            return;
+
+        _configDaily = CreateByConsumptionInterval(interval);
+    }
+
+    private static BarConfig CreateByConsumptionInterval(ConsumptionIntervalViewModel interval)
+    {
+        BarConfig config = new()
+            {
+                Options = new BarOptions
+                {
+                    Responsive = true,
+                    Legend = new Legend
+                    {
+                        Position = ChartJs.Blazor.Common.Enums.Position.Top,
+                        Display = true
+                    }
+                }
+            };
+
+        BarDataset<double> dataset = new(interval.Consumptions.Select(c => c.QttConsumption))
+            {
+                BackgroundColor = GetRandomColors(interval.Consumptions.Count),
+                BorderColor = ColorUtil.FromDrawingColor(System.Drawing.Color.DarkBlue),
+                BorderWidth = 1
+            };
+
+        config.Data.Datasets.Add(dataset);
+
+        return config;
+    }
+
+    private static string[] GetRandomColors(int count)
+    {
+        List<string> colors = new();
+        for (int i = 0; i < count; i++)
+            colors.Add(_availableColors[new Random().Next(0, _availableColors.Count() - 1)]);
+
+        return colors.ToArray();
+    }
+}
