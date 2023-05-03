@@ -25,7 +25,7 @@ public class ConsumptionService : IConsumptionService
 		_uoW = uoW;
 	}
 
-	public async Task<ConsumptionIntervalModel> GetDay(Guid idDosador, DateTimeOffset start)
+	public async Task<ConsumptionIntervalModel> GetDaily(Guid idDosador, DateTimeOffset start)
 	{
 		var context = await _contextClaim.GetRequiredCurrentClaim();
 
