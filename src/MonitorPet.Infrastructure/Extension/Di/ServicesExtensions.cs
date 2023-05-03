@@ -35,6 +35,7 @@ public static class ServicesExtensions
         => serviceCollection
             .AddScoped<Application.Services.Interfaces.IUserService, Application.Services.Implementation.UserService>()
             .AddScoped<Application.Services.Interfaces.IAgendamentoService, Application.Services.Implementation.AgendamentoService>()
+            .AddScoped<Application.Services.Interfaces.IConsumptionService, Application.Services.Implementation.ConsumptionService>()
             .AddScoped<Application.Services.Interfaces.IDosadorService, Application.Services.Implementation.DosadorService>();
 
 

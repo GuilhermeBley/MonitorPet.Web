@@ -38,7 +38,7 @@ public class ConsumptionService : IConsumptionService
 
         var end = start.AddHours(24) > DateTimeOffset.Now ? DateTimeOffset.Now : start.AddHours(24);
 
-        var consumptions = await GetByInterval(idDosador, start, end, TimeSpan.FromHours(1));
+        var consumptions = await GetByInterval(idDosador, start, end, TimeSpan.FromHours(2));
 
         return new ConsumptionIntervalModel
         {
@@ -97,24 +97,27 @@ public class ConsumptionService : IConsumptionService
         List<ConsumptionModel> consumptions = new();
         WeightHistoryModel? lastChecked = null;
         
-        for (;start <= end; start = start.Add(interval.Value))
+        for (;start < end; start = start.Add(interval.Value))
         {
             ConsumptionModel consumption = new (){ Start = start, End = start.Add(interval.Value) };
 
             await foreach (var currentWeight in _weightHistoryRepository
                 .GetByDosadorAndInterval(idDosador, start, start.Add(interval.Value)).WithCancellation(cancellationToken))
             {
-                if (lastChecked is null)
+                try
                 {
-                    lastChecked = currentWeight;
-                    continue;
-                }
+                    if (lastChecked is null)
+                        continue;
 
-                if (currentWeight.Weight < lastChecked.Weight)
+                    if (currentWeight.Weight < lastChecked.Weight)
+                    {
+                        consumption.QttConsumption += (lastChecked.Weight - currentWeight.Weight);
+                        continue;
+                    }
+                }
+                finally
                 {
                     lastChecked = currentWeight;
-                    consumption.QttConsumption += (lastChecked.Weight - currentWeight.Weight);
-                    continue;
                 }
             }
 

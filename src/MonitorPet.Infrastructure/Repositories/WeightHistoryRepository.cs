@@ -18,6 +18,9 @@ internal class WeightHistoryRepository : RepositoryBase, IWeightHistoryRepositor
 
     public async IAsyncEnumerable<WeightHistoryModel> GetByDosadorAndInterval(Guid idDosador, DateTimeOffset start, DateTimeOffset? end = null)
     {
+        if (end is null)
+            end = DateTimeOffset.MaxValue;
+
         const int MAX_TAKE = 100;
         const string QUERY = @"
 SELECT 
@@ -30,14 +33,14 @@ AND DateAt >= @Start
 AND DateAt < @End
 LIMIT @Skip, @Take;";
 
-        for (int pageIndex = 1; ; pageIndex++)
+        for (int pageIndex = 0; ; pageIndex++)
         {
             var items = await _connection.QueryAsync<WeightHistoryModel>(
                 QUERY,
                 new { 
                     IdDosador = idDosador,
-                    Start = start,
-                    End = end,
+                    Start = start.DateTime,
+                    End = end.Value.DateTime,
                     Skip = pageIndex* MAX_TAKE,
                     Take = MAX_TAKE
                 },
