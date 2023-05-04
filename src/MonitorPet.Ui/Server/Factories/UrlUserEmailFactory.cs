@@ -24,7 +24,7 @@ public class UrlUserEmailFactory : IUrlUserEmailFactory
     {
         var token = _tokenService.GenerateToken(claims.ToArray());
         return await Task.FromResult(
-            new Uri(AppBaseUrl+$"/ConfirmForgotPassword/{token}/Confirm"));
+            new Uri(AppBaseUrl+$"/ConfirmAccount/{token}/Confirm"));
     }
 }
 
