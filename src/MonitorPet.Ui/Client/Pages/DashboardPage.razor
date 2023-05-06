@@ -45,7 +45,7 @@
                     </div>
                 </div>
                 <div class="card-body m-0 p-0 h-100">
-                    @if (_configDaily is not null)
+                    @if (LoadGraph == StateMessage.Sent)
                     {
                         <Chart Config="_configDaily" @ref="_chartDaily"></Chart>
                     }
@@ -73,7 +73,19 @@
         ColorUtil.FromDrawingColor(System.Drawing.Color.GreenYellow),
     };
 
-    private BarConfig? _configDaily;
+    private BarConfig _configDaily { get; } = new()
+        {
+            Options = new BarOptions
+            {
+                Responsive = true,
+                Legend = new Legend
+                {
+                    Position = ChartJs.Blazor.Common.Enums.Position.Top,
+                    Display = true,
+                }
+            }
+        };
+
     private Chart? _chartDaily;
 
     private DayDateForm _dayDateForm { get; } = new();
@@ -169,14 +181,12 @@
         {
             Errors.Clear();
 
-            _configDaily = null;
-
             var interval = await GetIntervalDayByIdDosador(IdDosador);
 
             if (interval is null)
                 return;
 
-            _configDaily = CreateByConsumptionInterval(interval);
+            UpdateConsumptionInterval(interval);
 
             if (_chartDaily is not null)
             {
@@ -189,21 +199,8 @@
         }
     }
 
-    private static BarConfig CreateByConsumptionInterval(ConsumptionIntervalViewModel interval)
+    private void UpdateConsumptionInterval(ConsumptionIntervalViewModel interval)
     {
-        BarConfig config = new()
-            {
-                Options = new BarOptions
-                {
-                    Responsive = true,
-                    Legend = new Legend
-                    {
-                        Position = ChartJs.Blazor.Common.Enums.Position.Top,
-                        Display = true,
-                    }
-                }
-            };
-
         string[] labels = interval.Consumptions.Select(c => c.Start.ToString("dd-MMMM HH:mm")).ToArray();
         BarDataset<double> dataset = new(interval.Consumptions.Select(c => c.QttConsumption))
             {
@@ -214,12 +211,10 @@
                 
             };
 
-        config.Data.Datasets.Add(dataset);
+        _configDaily.Data.Datasets.Add(dataset);
 
         foreach(var label in labels)
-            config.Data.Labels.Add(label);
-
-        return config;
+            _configDaily.Data.Labels.Add(label);
     }
 
     private static string[] GetRandomColors(int count)
