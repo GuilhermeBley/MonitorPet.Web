@@ -27,10 +27,38 @@
                 </SelectDosadorComponent>
             }
 
-            @if (_configDaily is not null)
-            {
-                <Chart Config="_configDaily" @ref="_chartDaily"></Chart>
-            }
+            <div class="card m-0 p-0" style="min-height: 100px;">
+                <div class="card-header">
+                    <div class="row d-flex">
+                        <div class="col-md-8">
+                            Consumo diário
+                        </div>
+                        <div class="col-4 justify-content-end text-end">
+                            <EditForm Model="_dayDateForm">
+                                <InputDate 
+                                    ParsingErrorMessage="Data inválida" 
+                                    @bind-Value="_dayDateForm.Day" 
+                                    @oninput="(async ()=> await UpdateDayDashboard())">
+                                </InputDate>
+                            </EditForm>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body m-0 p-0 h-100">
+                    @if (_configDaily is not null)
+                    {
+                        <Chart Config="_configDaily" @ref="_chartDaily"></Chart>
+                    }
+                    else if (LoadGraph == StateMessage.Sending)
+                    {
+                        <LoadComponent></LoadComponent>
+                    }
+                    else
+                    {
+                        <p class="text-center">Nenhuma alimentação registrada.</p>
+                    }
+                </div>
+            </div>
         </div>
         <div class="col"></div>
     </div>
@@ -48,8 +76,10 @@
     private BarConfig? _configDaily;
     private Chart? _chartDaily;
 
-    private readonly DateTime _day = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0);
+    private DayDateForm _dayDateForm { get; } = new();
     private readonly DateTime _week = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0).AddDays(-7);
+
+    private StateMessage LoadGraph = StateMessage.None;
 
     private List<string> Errors { get; } = new();
 
@@ -106,7 +136,7 @@
             using var response = await _client.GetAsync(
                 GET
                 .Replace("{idDosador}", idDosador.ToString())
-                .Replace("{dateOffSet}", _day.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss")));
+                .Replace("{dateOffSet}", _dayDateForm.Day.ToUniversalTime().ToString("yyyy-MM-ddT00:00:00")));
 
             var result = await response.TryGetErrors();
 
@@ -133,14 +163,30 @@
 
     private async Task UpdateDayDashboard()
     {
-        _configDaily = null;
+        LoadGraph = StateMessage.Sending;
 
-        var interval = await GetIntervalDayByIdDosador(IdDosador);
+        try
+        {
+            Errors.Clear();
 
-        if (interval is null)
-            return;
+            _configDaily = null;
 
-        _configDaily = CreateByConsumptionInterval(interval);
+            var interval = await GetIntervalDayByIdDosador(IdDosador);
+
+            if (interval is null)
+                return;
+
+            _configDaily = CreateByConsumptionInterval(interval);
+
+            if (_chartDaily is not null)
+            {
+                await _chartDaily.Update();
+            }
+        }
+        finally
+        {
+            LoadGraph = StateMessage.Sent;
+        }
     }
 
     private static BarConfig CreateByConsumptionInterval(ConsumptionIntervalViewModel interval)
@@ -153,19 +199,25 @@
                     Legend = new Legend
                     {
                         Position = ChartJs.Blazor.Common.Enums.Position.Top,
-                        Display = true
+                        Display = true,
                     }
                 }
             };
 
+        string[] labels = interval.Consumptions.Select(c => c.Start.ToString("dd-MMMM HH:mm")).ToArray();
         BarDataset<double> dataset = new(interval.Consumptions.Select(c => c.QttConsumption))
             {
+                Label = "Consumo de ração",          
                 BackgroundColor = GetRandomColors(interval.Consumptions.Count),
                 BorderColor = ColorUtil.FromDrawingColor(System.Drawing.Color.DarkBlue),
-                BorderWidth = 1
+                BorderWidth = 1,
+                
             };
 
         config.Data.Datasets.Add(dataset);
+
+        foreach(var label in labels)
+            config.Data.Labels.Add(label);
 
         return config;
     }
@@ -177,5 +229,10 @@
             colors.Add(_availableColors[new Random().Next(0, _availableColors.Count() - 1)]);
 
         return colors.ToArray();
+    }
+
+    private class DayDateForm
+    {
+        public DateTime Day { get; set; } = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0);
     }
 }
