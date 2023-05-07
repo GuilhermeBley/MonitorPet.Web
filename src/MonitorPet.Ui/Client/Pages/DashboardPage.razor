@@ -1,0 +1,344 @@
+﻿@page "/Dashboard"
+@page "/Dashboard/{IdDosador:guid}"
+@using ChartJs.Blazor
+@using ChartJs.Blazor.BarChart
+@using ChartJs.Blazor.Common
+@using ChartJs.Blazor.Util
+@using MonitorPet.Ui.Client.Services
+@using MonitorPet.Ui.Shared.Model.Dosador
+@using MonitorPet.Ui.Shared.Model.Exceptions
+@using MonitorPet.Ui.Shared.Model.PesoHistorico
+@using MonitorPet.Ui.Shared.Model.User
+
+@inject HttpClient _client
+@inject UserInfoService _userInfo
+@inject NavigationManager _nav
+
+<div class="container-md h-100">
+    <div class="row">
+        <div class="col-md">
+            <ErrorComponent Errors="Errors"></ErrorComponent>
+
+            <!-- Select Dosador -->
+            @if (Dosadores.Any())
+            {
+                <SelectDosadorComponent Dosadores="Dosadores"
+                                    OnChangeDosador="(async (model)=> await ChangeDosador(model))">
+                </SelectDosadorComponent>
+            }
+
+            <hr />
+
+            <!-- Container Chart -->
+            <div class="card m-0 p-0" style="min-height: 100px;">
+                <div class="card-header">
+                    <div class="row d-flex">
+                        <div class="col-md-8">
+                            <select class="form-select" @oninput="(async (e)=> await UpdateConsumptionType(e))">
+                                <option value="1">Consumo diário</option>
+                                <option value="2">Consumo semanal</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 justify-content-end text-end" title="Visualizar em tabela">
+                            <div class="input-group mb-3">
+                                <button type="button" class="btn btn-outline-primary @(ContainsConsumptionHistory() ? "" : "disabled")" data-toggle="modal" data-target="#data-graph">
+                                    <i class="fa-solid fa-book-open"></i>
+                                </button>
+                                <input class="form-control" type="date" @oninput="(async (e)=> await UpdateDashboardAndValue(e))" value="@_dateForm.Day.ToString("yyyy-MM-dd")">
+                                </input>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body m-0 p-0 h-100">
+
+                    @if (!ContainsConsumptionHistory())
+                    {
+                        @if (LoadGraph is StateMessage.Sent)
+                        {
+                            <p class="text-center m-2">Sem registro de consumo deste intervalo (@GetIntervalText(_dateForm)).</p>
+                        }
+                        else
+                        {
+                            <LoadComponent></LoadComponent>
+                        }
+                    }
+
+                    <div class="@(ContainsConsumptionHistory() ? null : "d-none")">
+                        <Chart Config="_configDaily" @ref="_chartDaily"></Chart>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal data table -->
+            <div class="modal fade" id="data-graph" tabindex="-1" aria-labelledby="data-graphLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="data-graphLabel">Registro de consumo</h5>
+                            <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table w-100 text-center">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Início intervalo</th>
+                                        <th scope="col">Fim intervalo</th>
+                                        <th scope="col">Quantidade consumida (g)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var c in CurrentConsumption?.Consumptions ?? Enumerable.Empty<ConsumptionViewModel>())
+                                    {
+                                        <tr>
+                                            <td>@c.Start.LocalDateTime.ToString()</td>
+                                            <td>@c.End.LocalDateTime.ToLocalTime().ToString()</td>
+                                            <td>@c.QttConsumption.ToString()</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+
+                            <p class="text-end">Intervalo: @GetIntervalText(_dateForm)</p>
+                            <p class="text-end">Consumo total em intervalo: @CurrentConsumption?.Consumptions.Sum(c => c.QttConsumption) gramas</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private static readonly string[] _availableColors = new[]
+    {
+        ColorUtil.FromDrawingColor(System.Drawing.Color.Red),
+        ColorUtil.FromDrawingColor(System.Drawing.Color.Blue),
+        ColorUtil.FromDrawingColor(System.Drawing.Color.Green),
+        ColorUtil.FromDrawingColor(System.Drawing.Color.GreenYellow),
+    };
+
+    private BarConfig _configDaily { get; } = new()
+        {
+            Options = new BarOptions
+            {
+                Responsive = true,
+                Legend = new Legend
+                {
+                    Position = ChartJs.Blazor.Common.Enums.Position.Top,
+                    Display = false,
+                }
+            }
+        };
+
+    private ConsumptionIntervalViewModel? CurrentConsumption { get; set; }
+
+    private Chart? _chartDaily;
+
+    private DateForm _dateForm { get; } = new();
+
+    private StateMessage LoadGraph = StateMessage.None;
+
+    private List<string> Errors { get; } = new();
+
+    private IEnumerable<DosadorJoinUsuarioDosadorViewModel> Dosadores { get; set; }
+        = Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+
+    [Parameter]
+    public Guid IdDosador { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Dosadores = await GetDosadores();
+
+        if (!Dosadores.Any())
+        {
+            return;
+        }
+
+        IdDosador = Dosadores.FirstOrDefault()?.IdDosador ?? default;
+
+        await UpdateDashboard();
+    }
+
+    private async Task<IEnumerable<DosadorJoinUsuarioDosadorViewModel>> GetDosadores()
+    {
+        try
+        {
+            using var response = await _client.GetAsync("/api/dosador/all");
+
+            var errorsResponse = await response.TryGetErrors();
+
+            if (errorsResponse.ContainsError)
+            {
+                Errors.Add("Falha em coleta de dosadores.");
+                return Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>(); ;
+            }
+
+            return await response.Content.ReadFromJsonAsync<IEnumerable<DosadorJoinUsuarioDosadorViewModel>>()
+                ?? Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+        }
+        catch
+        {
+            Errors.Add("Falha em coleta de dosadores.");
+            return Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>(); ;
+        }
+    }
+
+    private async Task<ConsumptionIntervalViewModel?> GetIntervalByIdDosador(Guid idDosador)
+    {
+        const string GET_DAY = "api/consumption/day/{idDosador}/{dateOffSet}";
+        const string GET_WEEK = "api/consumption/week/{idDosador}/{dateOffSet}";
+
+        string query;
+        if (_dateForm.ConsumptionType == ConsumptionType.Daily)
+            query = GET_DAY;
+        else
+            query = GET_WEEK;
+
+        try
+        {
+            using var response = await _client.GetAsync(
+                query
+                .Replace("{idDosador}", idDosador.ToString())
+                .Replace("{dateOffSet}", _dateForm.Day.ToString("yyyy-MM-ddT00:00:00")));
+
+            var result = await response.TryGetErrors();
+
+            if (result.ContainsError)
+            {
+                Errors.AddRange(result.ErrorsMessages);
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<ConsumptionIntervalViewModel>();
+        }
+        catch
+        {
+            Errors.Add("Falha ao coletar relatório diário.");
+            return null;
+        }
+    }
+
+    private async Task ChangeDosador(DosadorJoinUsuarioDosadorViewModel modelToChange)
+    {
+        IdDosador = modelToChange.IdDosador;
+        await Task.CompletedTask;
+    }
+
+    private async Task UpdateDashboardAndValue(ChangeEventArgs changeEventArgs)
+    {
+        _dateForm.Day = DateTime.ParseExact(
+            changeEventArgs.Value?.ToString() ?? string.Empty,
+            "yyyy-MM-dd",
+            System.Globalization.CultureInfo.InvariantCulture);
+        await UpdateDashboard();
+    }
+
+    private async Task UpdateConsumptionType(ChangeEventArgs changeEventArgs)
+    {
+        var consumptionValueText = changeEventArgs.Value as string;
+
+        if (!int.TryParse(consumptionValueText, out int consumptionValueEnum))
+            return;
+
+        _dateForm.ConsumptionType = (ConsumptionType)consumptionValueEnum;
+
+        await UpdateDashboard();
+    }
+
+    private async Task UpdateDashboard()
+    {
+        LoadGraph = StateMessage.Sending;
+
+        try
+        {
+            Errors.Clear();
+
+            CurrentConsumption = await GetIntervalByIdDosador(IdDosador);
+
+            if (CurrentConsumption is null)
+                return;
+
+            UpdateConsumptionInterval(CurrentConsumption);
+
+            if (_chartDaily is not null)
+                await _chartDaily.Update();
+        }
+        finally
+        {
+            LoadGraph = StateMessage.Sent;
+        }
+    }
+
+    private void UpdateConsumptionInterval(ConsumptionIntervalViewModel interval)
+    {
+        _configDaily.Data.Datasets.Clear();
+        _configDaily.Data.Labels.Clear();
+
+        var validConsumptions = interval.Consumptions.Where(c => c.Start <= DateTime.UtcNow);
+
+        string[] labels;
+        if (_dateForm.ConsumptionType == ConsumptionType.Daily)
+            labels = validConsumptions.Select(c => c.Start.ToString("HH:mm")).ToArray();
+        else
+            labels = validConsumptions.Select(c => c.Start.ToString("dd-MMM")).ToArray();
+
+        BarDataset<double> dataset = new(validConsumptions.Select(c => c.QttConsumption))
+            {
+                Label = "Consumo de ração em gramas.",
+                BackgroundColor = GetRandomColors(validConsumptions.Count()),
+                BorderColor = ColorUtil.FromDrawingColor(System.Drawing.Color.DarkBlue),
+                BorderWidth = 1,
+                MinBarLength = 5,
+
+            };
+
+        _configDaily.Data.Datasets.Add(dataset);
+
+        foreach (var label in labels)
+            _configDaily.Data.Labels.Add(label);
+    }
+
+    private bool ContainsConsumptionHistory()
+        => CurrentConsumption is not null && CurrentConsumption.Consumptions.Sum(c => c.QttConsumption) != 0;
+
+    private static string[] GetRandomColors(int count)
+    {
+        List<string> colors = new();
+        for (int i = 0; i < count; i++)
+            colors.Add(_availableColors[new Random().Next(0, _availableColors.Count() - 1)]);
+
+        return colors.ToArray();
+    }
+
+    private static string GetIntervalText(DateForm form)
+    {
+        if (form.ConsumptionType == ConsumptionType.Daily)
+            return string.Concat(
+                form.Day.ToShortDateString(),
+                " - ",
+                form.Day.AddDays(1).ToShortDateString()
+            );
+        return string.Concat(
+            form.Day.ToShortDateString(),
+            " - ",
+            form.Day.AddDays(7).ToShortDateString()
+        );
+    }
+
+    private class DateForm
+    {
+        public ConsumptionType ConsumptionType { get; set; } = ConsumptionType.Daily;
+        public DateTime Day { get; set; } = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 0, 0, 0);
+    }
+
+    private enum ConsumptionType
+    {
+        Daily = 1,
+        Weekly = 2
+    }
+}

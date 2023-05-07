@@ -1,6 +1,6 @@
-﻿namespace MonitorPet.Application.Model.PesoHistorico;
+﻿namespace MonitorPet.Ui.Shared.Model.PesoHistorico;
 
-public class ConsumptionModel
+public class ConsumptionViewModel
 {
     public DateTimeOffset Start { get; set; }
     public DateTimeOffset End { get; set; }
