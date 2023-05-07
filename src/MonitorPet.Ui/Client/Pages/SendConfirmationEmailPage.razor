@@ -8,25 +8,28 @@
 
 <ErrorComponent></ErrorComponent>
 
-<h3>Envio e-mail de confirmação de conta</h3>
+<div class="card-body">
+    <div class="card shadow-sm p-3">
+        <h3 class="text-center">Envio e-mail de confirmação de conta</h3>
+        <EditForm Model="ConfirmEmailViewModel" OnValidSubmit="@(async () => await SendEmailConfirmation())">
+            <DataAnnotationsValidator />
+            <div class="form-outline mb-4">
+                <label class="form-label" for="emailInput">Email</label>
+                <InputText type="email" id="emailInput" class="form-control" @bind-Value="ConfirmEmailViewModel.Email" />
+                <ValidationMessage For="(()=>ConfirmEmailViewModel.Email)"></ValidationMessage>
+            </div>
 
-<EditForm Model="ConfirmEmailViewModel" OnValidSubmit="@(async () => await SendEmailConfirmation())">
-    <DataAnnotationsValidator />
-    <div class="form-outline mb-4">
-        <label class="form-label" for="emailInput">Email</label>
-        <InputText type="email" id="emailInput" class="form-control" @bind-Value="ConfirmEmailViewModel.Email" />
-        <ValidationMessage For="(()=>ConfirmEmailViewModel.Email)"></ValidationMessage>
+            @if (!IsSendEmailConfirmation)
+            {
+                <button type="submit" class="btn btn-primary btn-block mb-4">Enviar e-mail</button>
+            }
+            @if (IsSendEmailConfirmation)
+            {
+                <p>E-mail enviado com sucesso! Verifique sua caixa de entrada para a confirmação.</p>
+            }
+        </EditForm>
     </div>
-
-    @if (!IsSendEmailConfirmation)
-    {
-        <button type="submit" class="btn btn-primary btn-block mb-4">Enviar e-mail</button>
-    }
-    @if (IsSendEmailConfirmation)
-    {
-        <p>E-mail enviado com sucesso! Verifique sua caixa de entrada para a confirmação.</p>
-    }
-</EditForm>
+</div>
 
 @code {
     private ConfirmEmailViewModel ConfirmEmailViewModel { get; set; } = new();
@@ -40,7 +43,7 @@
 
         IsSendEmailConfirmation = true;
 
-        using var response = 
+        using var response =
             await _client.PostAsJsonAsync("api/login/sendemailconfirmaccount", ConfirmEmailViewModel);
     }
 }

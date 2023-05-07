@@ -71,7 +71,22 @@
             return;
         }
 
-        await _localStorage.SetItem(Services.AuthenticationStateService.DEFAUL_LOCAL_STORAGE, Token);
+        ResultAccessAccountViewModel result;
+        try
+        {
+            result = await responseConfirmAccount.Content.ReadFromJsonAsync<ResultAccessAccountViewModel>()
+                ?? throw new ArgumentNullException();
+        }
+        catch
+        {
+            Errors.Add("Falha em confirmar conta.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(result.Token))
+            return;
+
+        await _localStorage.SetItem(Services.AuthenticationStateService.DEFAUL_LOCAL_STORAGE, result.Token);
         _navigation.NavigateTo("/", true);
     }
 
