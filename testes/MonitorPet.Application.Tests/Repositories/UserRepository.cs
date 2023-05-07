@@ -119,6 +119,13 @@ internal class UserRepository : RepositoryBase, IUserRepository
         var userToUpdate = _mapper.Map<UserDbModel>(entity);
         userDb.PasswordSalt = userToUpdate.PasswordSalt;
         userDb.PasswordHash = userToUpdate.PasswordHash;
+        userDb.AccessFailedCount = userToUpdate.AccessFailedCount;
+        userDb.LockOutEnd = userToUpdate.LockOutEnd;
+        userDb.Email = userToUpdate.Email;
+        userDb.EmailConfirmed = userToUpdate.EmailConfirmed;
+        userDb.LockOutEnd = userToUpdate.LockOutEnd;
+        userDb.Name = userToUpdate.Name;
+        userDb.NickName = userToUpdate.NickName;
 
         _context.Users.Update(userDb);
 

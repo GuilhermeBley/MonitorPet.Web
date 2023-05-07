@@ -198,6 +198,8 @@ public class UserService : IUserService
             }
         );
 
+        userPasswordChange.ConfirmEmail();
+
         var userUpdated =
             await _userRepository.UpdatePasswordByIdOrDefault(userFound.Id, userPasswordChange)
             ?? throw new Core.Exceptions.CommonCoreException("Falha em atualizar a senha.");
