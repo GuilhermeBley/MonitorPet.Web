@@ -6,6 +6,10 @@ namespace MonitorPet.Application.Repositories;
 public interface IUserRepository : IRepositoryBase<User, UserModel, int>
 {
     Task<UserModel?> GetByEmailOrDefault(string email);
+
+    /// <summary>
+    /// Update all entity
+    /// </summary>
     Task<UserModel?> UpdatePasswordByIdOrDefault(int id, User entity);
     Task<UserModel?> UpdateAccessAccountFailed(int id, User entity);
 }

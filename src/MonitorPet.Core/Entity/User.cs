@@ -146,6 +146,11 @@ public class User : Entity
         return base.GetHashCode() * 45864957;
     }
 
+    public void ConfirmEmail()
+    {
+        EmailConfirmed = true;
+    }
+
     /// <summary>
     /// Creates a new instance of <see cref="User"/>
     /// </summary>
