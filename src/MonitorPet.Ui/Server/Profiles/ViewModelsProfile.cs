@@ -14,5 +14,8 @@ public class ViewModelsProfile : Profile
         CreateMap<Shared.Model.Agendamento.AgendamentoViewModel, Application.Model.Agendamento.AgendamentoModel>().ReverseMap();
         CreateMap<Shared.Model.Agendamento.CreateAgendamentoViewModel, Application.Model.Agendamento.CreateAgendamentoModel>().ReverseMap();
         CreateMap<Shared.Model.Agendamento.UpdateAgendamentoViewModel, Application.Model.Agendamento.UpdateAgendamentoModel>().ReverseMap();
+        
+        CreateMap<Shared.Model.PesoHistorico.ConsumptionIntervalViewModel, Application.Model.PesoHistorico.ConsumptionIntervalModel>().ReverseMap();
+        CreateMap<Shared.Model.PesoHistorico.ConsumptionViewModel, Application.Model.PesoHistorico.ConsumptionModel>().ReverseMap();
     }
 }
