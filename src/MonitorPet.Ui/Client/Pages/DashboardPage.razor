@@ -19,6 +19,7 @@
         <div class="col-md">
             <ErrorComponent Errors="Errors"></ErrorComponent>
 
+            <!-- Select Dosador -->
             @if (Dosadores.Any())
             {
                 <SelectDosadorComponent Dosadores="Dosadores"
@@ -28,6 +29,7 @@
 
             <hr />
 
+            <!-- Container Chart -->
             <div class="card m-0 p-0" style="min-height: 100px;">
                 <div class="card-header">
                     <div class="row d-flex">
@@ -37,13 +39,14 @@
                                 <option value="2">Consumo semanal</option>
                             </select>
                         </div>
-                        <div class="col-4 justify-content-end text-end">
-                            <EditForm Model="_dateForm">
-                                <InputDate ParsingErrorMessage="Data inválida"
-                                           @bind-Value="_dateForm.Day"
-                                           @oninput="(async (e)=> await UpdateDashboardAndValue(e))">
-                                </InputDate>
-                            </EditForm>
+                        <div class="col-md-4 justify-content-end text-end" title="Visualizar em tabela">
+                            <div class="input-group mb-3">
+                                <button type="button" class="btn btn-outline-primary @(ContainsConsumptionHistory() ? "" : "disabled")" data-toggle="modal" data-target="#data-graph">
+                                    <i class="fa-solid fa-book-open"></i>
+                                </button>
+                                <input class="form-control" type="date" @oninput="(async (e)=> await UpdateDashboardAndValue(e))" value="@_dateForm.Day.ToString("yyyy-MM-dd")">
+                                </input>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -63,6 +66,45 @@
 
                     <div class="@(ContainsConsumptionHistory() ? null : "d-none")">
                         <Chart Config="_configDaily" @ref="_chartDaily"></Chart>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal data table -->
+            <div class="modal fade" id="data-graph" tabindex="-1" aria-labelledby="data-graphLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="data-graphLabel">Registro de consumo</h5>
+                            <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table w-100 text-center">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Início intervalo</th>
+                                        <th scope="col">Fim intervalo</th>
+                                        <th scope="col">Quantidade consumida (g)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var c in CurrentConsumption?.Consumptions ?? Enumerable.Empty<ConsumptionViewModel>())
+                                    {
+                                        <tr>
+                                            <td>@c.Start.LocalDateTime.ToString()</td>
+                                            <td>@c.End.LocalDateTime.ToLocalTime().ToString()</td>
+                                            <td>@c.QttConsumption.ToString()</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+
+                            <p class="text-end">Intervalo: @GetIntervalText(_dateForm)</p>
+                            <p class="text-end">Consumo total em intervalo: @CurrentConsumption?.Consumptions.Sum(c => c.QttConsumption) gramas</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                        </div>
                     </div>
                 </div>
             </div>
