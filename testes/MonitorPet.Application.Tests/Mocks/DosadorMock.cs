@@ -12,14 +12,14 @@ internal static class DosadorMock
         {
             IdDosador = DefaultIdDosador1,
             Nome = "Default name",
-            PesoMax = 10
+            ImgUrl = string.Empty
         };
     public static DosadorModel DosadorExample2 =>
         new DosadorModel
         {
             IdDosador = DefaultIdDosador2,
             Nome = "Default name",
-            PesoMax = 10
+            ImgUrl = string.Empty
         };
 
     public static DosadorModel CreateNewDosador()
@@ -27,6 +27,6 @@ internal static class DosadorMock
         {
             IdDosador = Guid.NewGuid(),
             Nome = "Default name",
-            PesoMax = 10
+            ImgUrl = string.Empty
         };
 }

@@ -9,4 +9,5 @@ public interface IDosadorService
     Task<DosadorJoinUsuarioDosadorModel> AddDosadorToUser(int idUser, string token);
     Task<DosadorJoinUsuarioDosadorModel> RemoveDosadorFromUser(int idUser, Guid idDosador);
     Task<DosadorModel> UpdateNameDosador(int idUser, Guid idDosador, string newName);
+    Task<DosadorModel> UpdateDosador(int idUser, Guid idDosador, UpdateDosadorModel updateDosadorModel);
 }
