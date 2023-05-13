@@ -14,10 +14,10 @@ public class DosadorTest
     }
 
     [Fact]
-    public void CreatePesoZero_TryCreate_Success()
+    public void CreateWithoutImg_TryCreate_Success()
     {
         Assert.NotNull(
-            CreatePesoZero()
+            CreateWithoutImg()
         );
     }
 
@@ -28,18 +28,10 @@ public class DosadorTest
             () => Create(nome: string.Empty)
         );
     }
-    
-    [Fact]
-    public void Create_TryCreateInvalidPeso_FailedToCreate()
-    {
-        Assert.ThrowsAny<Core.Exceptions.CommonCoreException>(
-            () => Create(pesoMax: -1)
-        );
-    }
 
-    private static Dosador Create(string nome = "Valid name", double pesoMax = 1.00)
-        => Dosador.Create(nome, pesoMax);
+    private static Dosador Create(string nome = "Valid name", string? imgUrl = "img.jpg")
+        => Dosador.Create(nome, imgUrl);
 
-    private static Dosador CreatePesoZero(string nome = "Valid name")
-        => Dosador.CreatePesoZero(nome);
+    private static Dosador CreateWithoutImg(string nome = "Valid name")
+        => Dosador.CreateWithoutImg(nome);
 }

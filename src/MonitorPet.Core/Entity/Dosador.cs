@@ -7,13 +7,13 @@ public class Dosador : Entity
     public Guid IdDosador { get; private set; }
     public override Guid IdEntity => IdDosador;
     public string Nome { get; private set; }
-    public double PesoMax { get; private set; }
+    public string? ImgUrl { get; private set; }
 
-    private Dosador(Guid idDosador, string nome, double pesoMax)
+    private Dosador(Guid idDosador, string nome, string? imgUrl)
     {
         IdDosador = idDosador;
         Nome = nome;
-        PesoMax = pesoMax;
+        ImgUrl = imgUrl;
     }
     
     public override bool Equals(object? obj)
@@ -26,7 +26,7 @@ public class Dosador : Entity
             return false;
 
         if (!this.Nome.Equals(dosador.Nome) ||
-            !this.PesoMax.Equals(dosador.PesoMax))
+            ImgUrl != dosador.ImgUrl)
             return false;
 
         return true;
@@ -37,17 +37,14 @@ public class Dosador : Entity
         return base.GetHashCode() * 1414164564;
     }
 
-    public static Dosador Create(string nome, double pesoMax)
+    public static Dosador Create(string nome, string? imgUrl)
     {
         if (string.IsNullOrWhiteSpace(nome))
             throw new CommonCoreException("Nome não deve estar vazio.");
 
-        if (pesoMax < 0)
-            throw new CommonCoreException("Peso máximo não pode ser menor que zero.");
-
-        return new Dosador(Guid.NewGuid(), nome, pesoMax);
+        return new Dosador(Guid.NewGuid(), nome, imgUrl);
     }
 
-    public static Dosador CreatePesoZero(string nome)
-        => Create(nome, 0);
+    public static Dosador CreateWithoutImg(string nome)
+        => Create(nome, null);
 }

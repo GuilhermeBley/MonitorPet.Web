@@ -120,7 +120,7 @@ public class DosadorService : IDosadorService
         if (!userContainsDosador)
             throw new Core.Exceptions.NotFoundCoreException("Dosador não encontrado.");
 
-        var entityToUpdate = Core.Entity.Dosador.CreatePesoZero(newName);
+        var entityToUpdate = Core.Entity.Dosador.CreateWithoutImg(newName);
 
         var dosadorUpdated = await
             _dosadorRepository.UpdateByIdOrDefault(idDosador, entityToUpdate)
