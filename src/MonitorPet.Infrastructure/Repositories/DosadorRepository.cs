@@ -3,6 +3,7 @@ using MonitorPet.Application.Model.Dosador;
 using MonitorPet.Application.Repositories;
 using MonitorPet.Core.Entity;
 using MonitorPet.Infrastructure.UoW;
+using System.Text;
 
 namespace MonitorPet.Infrastructure.Repositories;
 
@@ -30,15 +31,21 @@ public class DosadorRepository : RepositoryBase, IDosadorRepository
     public async Task<DosadorModel?> GetByIdOrDefault(Guid id)
     {
         return await _connection.QueryFirstOrDefaultAsync<DosadorModel>(
-            @"SELECT IdDosador IdDosador, Nome Nome, PesoMaxGr PesoMax FROM monitorpet.dosador
+            @"SELECT IdDosador IdDosador, Nome Nome, ImgUrl ImgUrl FROM monitorpet.dosador
                 WHERE IdDosador = @IdDosador;",
             new { IdDosador = id },
             _transaction
         );
     }
 
-    public Task<DosadorModel?> UpdateByIdOrDefault(Guid id, Dosador entity)
+    public async Task<DosadorModel?> UpdateByIdOrDefault(Guid id, Dosador entity)
     {
-        throw new NotImplementedException();
+        return await _connection.QueryFirstOrDefaultAsync<DosadorModel>(
+            @"UPDATE monitorpet.dosador SET Nome = @Nome, ImgUrl = @ImgUrl WHERE (IdDosador = @IdDosador);
+            SELECT IdDosador IdDosador, Nome Nome, ImgUrl ImgUrl FROM monitorpet.dosador
+                WHERE IdDosador = @IdDosador;",
+            new { IdDosador = id, Nome = entity.Nome, ImgUrl = entity.ImgUrl },
+            _transaction
+        );
     }
 }
