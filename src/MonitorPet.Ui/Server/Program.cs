@@ -29,6 +29,8 @@ builder.Services.Configure<MonitorPet.Infrastructure.Options.DbOptions>(
      builder.Configuration.GetSection(MonitorPet.Infrastructure.Options.DbOptions.SECTION));
 builder.Services.Configure<MonitorPet.Infrastructure.Options.EmailOptions>(
      builder.Configuration.GetSection(MonitorPet.Infrastructure.Options.EmailOptions.SECTION));
+builder.Services.Configure<MonitorPet.Infrastructure.Options.MpStorageAccountOptions>(
+     builder.Configuration.GetSection(MonitorPet.Infrastructure.Options.MpStorageAccountOptions.SECTION));
 builder.Services.AddOptions<MonitorPet.Ui.Server.Options.JwtOptions>()
     .Bind(builder.Configuration.GetSection(MonitorPet.Ui.Server.Options.JwtOptions.SECTION))
     .ValidateDataAnnotations();
