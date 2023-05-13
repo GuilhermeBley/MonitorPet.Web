@@ -105,6 +105,19 @@ public class DosadorService : IDosadorService
         return await _usuarioDosadorRepository.GetByIdUser(idUser);
     }
 
+    public async IAsyncEnumerable<JoinUsuarioDosadorInfoModel> GetDosadoresInfoByIdUser(int idUser)
+    {
+        var currentClaims = await _contextClaim.GetRequiredCurrentClaim();
+
+        if (currentClaims.RequiredIdUser != idUser)
+            throw new Core.Exceptions.UnauthorizedCoreException("Usuário não autorizado.");
+
+        using var connection = await _uoW.OpenConnectionAsync();
+
+        await foreach (var dosadorJoin in _usuarioDosadorRepository.GetInfoByIdUser(idUser))
+            yield return dosadorJoin;
+    }
+
     public async Task<DosadorModel> UpdateNameDosador(int idUser, Guid idDosador, string newName)
     {
         var currentClaims = await _contextClaim.GetRequiredCurrentClaim();

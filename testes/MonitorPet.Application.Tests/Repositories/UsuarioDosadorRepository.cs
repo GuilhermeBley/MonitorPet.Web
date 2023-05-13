@@ -83,6 +83,11 @@ internal class UsuarioDosadorRepository : RepositoryBase, IUsuarioDosadorReposit
                 ImgUrl = dosador.ImgUrl
             }).FirstOrDefaultAsync();
 
+    public IAsyncEnumerable<JoinUsuarioDosadorInfoModel> GetInfoByIdUser(int idUser)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<UsuarioDosadorModel?> UpdateByIdOrDefault(int id, UsuarioDosador entity)
     {
         var userDosadorDb = await _context.UsuariosDosadores.FirstOrDefaultAsync(u => u.Id == id);
