@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MonitorPet.Application.Model.Dosador;
 using MonitorPet.Application.Services.Implementation;
 using MonitorPet.Application.Services.Interfaces;
 using MonitorPet.Ui.Server.Security;
@@ -82,15 +83,17 @@ public class DosadorController : ControllerBase
         return Ok(dosadorRemoved);
     }
 
-    [HttpPatch("Rename")]
+    [HttpPut()]
     [Authorize]
-    public async Task<ActionResult<DosadorJoinUsuarioDosadorViewModel>> RemoveDosador([FromQuery] Guid idDosador, 
-            [FromBody] PatchDosadorNameViewModel patchDosadorNameViewModel)
+    public async Task<ActionResult<DosadorJoinUsuarioDosadorViewModel>> UpdateDosador([FromQuery] Guid idDosador, 
+            [FromBody] PutDosadorNameViewModel putDosadorViewModel)
     {
+        var putDosador = _map.Map<UpdateDosadorModel>(putDosadorViewModel);
+
         var ctx = await _contextClaim.GetRequiredCurrentClaim();
 
         var dosadorUpdated = 
-            await _dosadorService.UpdateNameDosador(ctx.RequiredIdUser, idDosador, patchDosadorNameViewModel.NewName);
+            await _dosadorService.UpdateDosador(ctx.RequiredIdUser, idDosador, putDosador);
 
         if (dosadorUpdated is null)
             return NotFound();
