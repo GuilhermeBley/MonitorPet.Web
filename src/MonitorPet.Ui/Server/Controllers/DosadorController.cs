@@ -43,19 +43,14 @@ public class DosadorController : ControllerBase
         return Ok(userDosadores);
     }
 
-    [HttpGet("Info/All/{page}")]
+    [HttpGet("Info/All")]
     [Authorize]
-    public async Task<ActionResult<IEnumerable<JoinUsuarioDosadorInfoViewModel>>> GetDosadoresInfo(
-        [Range(0, int.MaxValue)]int page)
+    public async Task<ActionResult<IEnumerable<JoinUsuarioDosadorInfoViewModel>>> GetDosadoresInfo()
     {
-        const int PAGE_SIZE = 10;
-
         var ctx = await _contextClaim.GetRequiredCurrentClaim();
 
         var userDosadores =
             (await _dosadorService.GetDosadoresInfoByIdUser(ctx.RequiredIdUser)
-            .Skip(page * PAGE_SIZE)
-            .Take(PAGE_SIZE)
             .ToListAsync())
             .Select(d => _map.Map<JoinUsuarioDosadorInfoViewModel>(d));
 

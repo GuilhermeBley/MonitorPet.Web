@@ -10,6 +10,7 @@ public static class ServicesExtensions
         .AddMapper()
         .AddRepositories()
         .AddServices()
+        .AddStorage()
         .AddMySql();
 
     private static IServiceCollection AddEmails(this IServiceCollection serviceCollection)
