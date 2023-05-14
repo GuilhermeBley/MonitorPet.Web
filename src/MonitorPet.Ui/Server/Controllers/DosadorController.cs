@@ -6,6 +6,7 @@ using MonitorPet.Application.Services.Implementation;
 using MonitorPet.Application.Services.Interfaces;
 using MonitorPet.Ui.Server.Security;
 using MonitorPet.Ui.Shared.Model.Dosador;
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 
 namespace MonitorPet.Ui.Server.Controllers;
@@ -35,6 +36,28 @@ public class DosadorController : ControllerBase
         var userDosadores =
             (await _dosadorService.GetDosadoresByIdUser(ctx.RequiredIdUser))
                 .Select(d => _map.Map<DosadorJoinUsuarioDosadorViewModel>(d));
+
+        if (!userDosadores.Any())
+            return NoContent();
+
+        return Ok(userDosadores);
+    }
+
+    [HttpGet("Info/All/{page}")]
+    [Authorize]
+    public async Task<ActionResult<IEnumerable<JoinUsuarioDosadorInfoViewModel>>> GetDosadoresInfo(
+        [Range(0, int.MaxValue)]int page)
+    {
+        const int PAGE_SIZE = 10;
+
+        var ctx = await _contextClaim.GetRequiredCurrentClaim();
+
+        var userDosadores =
+            (await _dosadorService.GetDosadoresInfoByIdUser(ctx.RequiredIdUser)
+            .Skip(page * PAGE_SIZE)
+            .Take(PAGE_SIZE)
+            .ToListAsync())
+            .Select(d => _map.Map<JoinUsuarioDosadorInfoViewModel>(d));
 
         if (!userDosadores.Any())
             return NoContent();
