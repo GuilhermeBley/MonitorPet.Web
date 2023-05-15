@@ -5,7 +5,7 @@
     <div class="btn-group">
         <button type="button" class="btn dropdown-toggle fs-2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
             disabled="@(Dosadores.Count()<=1)">
-            <img class="icon" src="@ImgUrl.DefaultIconUrl">
+            <img class="rounded-circle" src="@(string.IsNullOrEmpty(CurrentSelected.ImgUrl) ? Default.ImgUrl.DefaultIconUrl :  CurrentSelected.ImgUrl)" width="140" height="140">
             @CurrentSelected.Nome
         </button>
         <div class="dropdown-menu dropdown-menu-right">
@@ -19,24 +19,24 @@
 
 @code {
 
-    private DosadorJoinUsuarioDosadorViewModel? CurrentSelected { get; set; }
+    private JoinUsuarioDosadorInfoViewModel? CurrentSelected { get; set; }
 
-    private IEnumerable<DosadorJoinUsuarioDosadorViewModel> AllMinusCurrent =>
+    private IEnumerable<JoinUsuarioDosadorInfoViewModel> AllMinusCurrent =>
         Dosadores.Where(d => d.IdDosador != CurrentSelected?.IdDosador);
 
     [Parameter]
-    public IEnumerable<DosadorJoinUsuarioDosadorViewModel> Dosadores { get; set; }
-        = Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+    public IEnumerable<JoinUsuarioDosadorInfoViewModel> Dosadores { get; set; }
+        = Enumerable.Empty<JoinUsuarioDosadorInfoViewModel>();
 
     [Parameter]
-    public EventCallback<DosadorJoinUsuarioDosadorViewModel> OnChangeDosador { get; set; }
+    public EventCallback<JoinUsuarioDosadorInfoViewModel> OnChangeDosador { get; set; }
 
     protected override void OnInitialized()
     {
         CurrentSelected = Dosadores.FirstOrDefault();
     }
 
-    private async Task ChangeOptionsAndCallEvent(DosadorJoinUsuarioDosadorViewModel dosadorSelected)
+    private async Task ChangeOptionsAndCallEvent(JoinUsuarioDosadorInfoViewModel dosadorSelected)
     {
         CurrentSelected = dosadorSelected;
 

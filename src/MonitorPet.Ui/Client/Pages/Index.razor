@@ -7,18 +7,29 @@
 <PageTitle>Dosadores</PageTitle>
 
 <div class="container-md mt-3">
+    
+    <ErrorComponent Errors="Errors"></ErrorComponent>
+    <SuccessComponent Successes="SuccessMessages"></SuccessComponent>
+
     <div class="row text-end">
         <div>
-            <button type="button" class="btn btn-outline-primary">
+            <button id="addDosador" type="button" class="btn btn-outline-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="bi bi-plus-circle-fill"></i>
                 Adicionar dosadores
             </button>
+            <div class="dropdown-menu" aria-labelledby="addDosador">
+                <EditForm class="mx-2" Model="_addDosadorViewModel" OnValidSubmit="(async ()=> await AddDosador())">
+                    <h6 class="dropdown-header">Insira o novo dosador</h6>
+                    <div class="input-group mb-3">
+                        <InputText type="text" title="Token do novo dosador" class="form-control" aria-label="Código dosador" @bind-Value="_addDosadorViewModel.Token" />
+                        <button class="btn btn-outline-secondary" type="submit">Adicionar</button>
+                    </div>
+                </EditForm>
+            </div>
         </div>
     </div>
     <hr />
     <div class="row text-center">
-
-        <ErrorComponent Errors="Errors"></ErrorComponent>
 
         @if (!Dosadores.Any() && LoadDosadores == StateMessage.Sent)
         {
@@ -75,7 +86,7 @@
         }
     </div>
 
-    <ModalComponent @ref="_modal">
+    <ModalComponent @ref="_modalEdit">
         <Header>
             <h3>Editar pet </h3>
         </Header>
@@ -99,12 +110,15 @@
 
     private DateTime LastRefresh { get; set; }
     private List<string> Errors { get; } = new();
+    private List<string> SuccessMessages { get; } = new();
     private List<string> ErrorsEditPet { get; } = new();
     private IEnumerable<JoinUsuarioDosadorInfoViewModel> Dosadores { get; set; } =
         Enumerable.Empty<JoinUsuarioDosadorInfoViewModel>();
     private StateMessage LoadDosadores { get; set; } = StateMessage.Sending;
 
-    private ModalComponent? _modal { get; set; }
+    private ModalComponent? _modalEdit { get; set; }
+
+    private AddDosadorViewModel _addDosadorViewModel { get; } = new();
 
     private Guid? IdEditDosador { get; set; }
     private PutDosadorViewModel _putDosadorViewModel { get; } = new();
@@ -154,13 +168,13 @@
         _putDosadorViewModel.NewImage = new byte[0];
         _putDosadorViewModel.UpdateImg = false;
 
-        _modal?.Open();
+        _modalEdit?.Open();
     }
 
     private void CloseEditPet()
     {
         IdEditDosador = null;
-        _modal?.Close();
+        _modalEdit?.Close();
     }
 
     private async Task LoadFilesEditPet(InputFileChangeEventArgs e)
@@ -194,7 +208,7 @@
         if (!success)
             return;
 
-        _modal?.Close();
+        _modalEdit?.Close();
         await TrySetDosadores();
     }
 
@@ -207,7 +221,7 @@
         try
         {
             using var response = await _client.PutAsJsonAsync(
-                PUT.Replace("{idDosador}", IdEditDosador.ToString()), 
+                PUT.Replace("{idDosador}", IdEditDosador.ToString()),
                 _putDosadorViewModel);
 
             var errorsResp = await response.TryGetErrors();
@@ -225,5 +239,33 @@
         }
 
         return true;
+    }
+
+    private async Task AddDosador()
+    {
+        const string POST = "api/dosador/add";
+
+        SuccessMessages.Clear();
+        Errors.Clear();
+
+        try
+        {
+            using var response = await _client.PostAsJsonAsync(POST, _addDosadorViewModel);
+
+            var errorsResp = await response.TryGetErrors();
+
+            if (errorsResp.ContainsError)
+            {
+                Errors.AddRange(errorsResp.ErrorsMessages);
+                return;
+            }
+
+            SuccessMessages.Add("Dosador adicionado com sucesso.");
+            _addDosadorViewModel.Token = string.Empty;
+        }
+        catch
+        {
+            Errors.Add("Falha ao adicionar dosador.");
+        }
     }
 }

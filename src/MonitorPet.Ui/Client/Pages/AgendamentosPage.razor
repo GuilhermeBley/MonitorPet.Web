@@ -153,8 +153,8 @@
     private List<string> Successes { get; } = new();
     private List<AgendamentoViewModel> Agendamentos { get; } = new();
 
-    private IEnumerable<DosadorJoinUsuarioDosadorViewModel> Dosadores { get; set; }
-        = Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+    private IEnumerable<JoinUsuarioDosadorInfoViewModel> Dosadores { get; set; }
+        = Enumerable.Empty<JoinUsuarioDosadorInfoViewModel>();
 
     private StateMessage AgendamentosListState = StateMessage.None;
 
@@ -229,27 +229,27 @@
         }
     }
 
-    private async Task<IEnumerable<DosadorJoinUsuarioDosadorViewModel>> GetDosadores()
+    private async Task<IEnumerable<JoinUsuarioDosadorInfoViewModel>> GetDosadores()
     {
         try
         {
-            using var response = await _client.GetAsync("/api/dosador/all");
+            using var response = await _client.GetAsync("/api/dosador/info/all");
 
             var errorsResponse = await response.TryGetErrors();
 
             if (errorsResponse.ContainsError)
             {
                 Errors.Add("Falha em coleta de dosadores.");
-                return Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>(); ;
+                return Enumerable.Empty<JoinUsuarioDosadorInfoViewModel>(); ;
             }
 
-            return await response.Content.ReadFromJsonAsync<IEnumerable<DosadorJoinUsuarioDosadorViewModel>>()
-                ?? Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+            return await response.Content.ReadFromJsonAsync<IEnumerable<JoinUsuarioDosadorInfoViewModel>>()
+                ?? Enumerable.Empty<JoinUsuarioDosadorInfoViewModel>();
         }
         catch
         {
             Errors.Add("Falha em coleta de dosadores.");
-            return Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>(); ;
+            return Enumerable.Empty<JoinUsuarioDosadorInfoViewModel>(); ;
         }
     }
 
