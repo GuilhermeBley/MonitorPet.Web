@@ -59,7 +59,7 @@ public class UsuarioDosadorRepository : RepositoryBase, IUsuarioDosadorRepositor
                 ud.id Id, 
                 ud.IdUsuario IdUsuario, 
                 d.IdDosador IdDosador,
-                d.PesoMaxGr PesoMax,
+                d.ImgUrl ImgUrl,
                 d.Nome Nome
             FROM monitorpet.dosadorusuario ud
             INNER JOIN monitorpet.dosador d
@@ -77,7 +77,7 @@ public class UsuarioDosadorRepository : RepositoryBase, IUsuarioDosadorRepositor
                 ud.id Id, 
                 ud.IdUsuario IdUsuario, 
                 d.IdDosador IdDosador,
-                d.PesoMaxGr PesoMax,
+                d.ImgUrl ImgUrl,
                 d.Nome Nome
             FROM monitorpet.dosadorusuario ud
             INNER JOIN monitorpet.dosador d
@@ -87,6 +87,41 @@ public class UsuarioDosadorRepository : RepositoryBase, IUsuarioDosadorRepositor
             new { IdUsuario = idUser, IdDosador = idDosador },
             _transaction
         );
+    }
+
+    public async IAsyncEnumerable<JoinUsuarioDosadorInfoModel> GetInfoByIdUser(int idUser)
+    {
+        const int MAX_PER_PAGE = 10;
+
+        IEnumerable<JoinUsuarioDosadorInfoModel> pageDosadores;
+        int page = 0;
+
+        do
+        {
+            pageDosadores = await _connection.QueryAsync<JoinUsuarioDosadorInfoModel>(
+                @"SELECT 
+	            ud.id Id, 
+	            ud.IdUsuario IdUsuario, 
+	            d.IdDosador IdDosador,
+	            d.ImgUrl ImgUrl,
+	            d.Nome Nome,
+                (SELECT PesoGr FROM monitorpet.historicopeso his WHERE his.IdDosador = d.IdDosador ORDER BY DateAt DESC LIMIT 0,1) CurrentWeight,
+                d.UltimaAtualizacao LastSeen
+            FROM monitorpet.dosadorusuario ud
+            INNER JOIN monitorpet.dosador d
+	            ON d.IdDosador = ud.IdDosador
+            WHERE ud.IdUsuario = @IdUsuario
+            LIMIT @Skip, @Take;",
+                new { IdUsuario = idUser, Skip = page*MAX_PER_PAGE, Take = MAX_PER_PAGE },
+                _transaction
+            );
+
+            foreach (var dosador in pageDosadores)
+                yield return dosador;
+
+            page++;
+
+        } while (pageDosadores.Count() >= MAX_PER_PAGE);
     }
 
     public Task<UsuarioDosadorModel?> UpdateByIdOrDefault(int id, UsuarioDosador entity)

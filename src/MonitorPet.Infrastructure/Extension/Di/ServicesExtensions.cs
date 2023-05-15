@@ -10,6 +10,7 @@ public static class ServicesExtensions
         .AddMapper()
         .AddRepositories()
         .AddServices()
+        .AddStorage()
         .AddMySql();
 
     private static IServiceCollection AddEmails(this IServiceCollection serviceCollection)
@@ -44,4 +45,7 @@ public static class ServicesExtensions
             .AddScoped<Infrastructure.UoW.MySqlSession>()
             .AddScoped<Infrastructure.UoW.IDbSession>(x => x.GetRequiredService<Infrastructure.UoW.MySqlSession>())
             .AddScoped<Application.UoW.IUnitOfWork>(x => x.GetRequiredService<Infrastructure.UoW.MySqlSession>());
+    private static IServiceCollection AddStorage(this IServiceCollection serviceCollection)
+        => serviceCollection
+        .AddSingleton<Application.StorageRepositories.IImgRepository, StorageRepositories.ImgRepository>();
 }

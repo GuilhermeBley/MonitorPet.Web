@@ -1,4 +1,5 @@
 ﻿@page "/"
+
 @using MonitorPet.Ui.Shared.Model.Dosador
 
 @inject HttpClient _client
@@ -6,18 +7,29 @@
 <PageTitle>Dosadores</PageTitle>
 
 <div class="container-md mt-3">
+    
+    <ErrorComponent Errors="Errors"></ErrorComponent>
+    <SuccessComponent Successes="SuccessMessages"></SuccessComponent>
+
     <div class="row text-end">
         <div>
-            <button type="button" class="btn btn-outline-primary">
+            <button id="addDosador" type="button" class="btn btn-outline-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="bi bi-plus-circle-fill"></i>
                 Adicionar dosadores
             </button>
+            <div class="dropdown-menu" aria-labelledby="addDosador">
+                <EditForm class="mx-2" Model="_addDosadorViewModel" OnValidSubmit="(async ()=> await AddDosador())">
+                    <h6 class="dropdown-header">Insira o novo dosador</h6>
+                    <div class="input-group mb-3">
+                        <InputText type="text" title="Token do novo dosador" class="form-control" aria-label="Código dosador" @bind-Value="_addDosadorViewModel.Token" />
+                        <button class="btn btn-outline-secondary" type="submit">Adicionar</button>
+                    </div>
+                </EditForm>
+            </div>
         </div>
     </div>
     <hr />
     <div class="row text-center">
-
-        <ErrorComponent Errors="Errors"></ErrorComponent>
 
         @if (!Dosadores.Any() && LoadDosadores == StateMessage.Sent)
         {
@@ -32,21 +44,88 @@
         @foreach (var dosador in Dosadores)
         {
             <div class="col-lg-4 mt-3">
-                <img class="rounded-circle" src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" alt="Generic placeholder image" width="140" height="140">
-                <p><span class="fs-3">@dosador.Nome </span><a><i class="bi bi-three-dots-vertical"></i></a></p>
+                <img class="rounded-circle" src="@(string.IsNullOrEmpty(dosador.ImgUrl) ? Default.ImgUrl.DefaultIconUrl :  dosador.ImgUrl)" width="140" height="140">
+                <p>
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle border-0 bg-transparent" type="button" id="optPet-@dosador.IdDosador" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="fs-3">@dosador.Nome </span>
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="optPet-@dosador.IdDosador">
+                            <a class="dropdown-item" href="#" @onclick="(() => EditPet(dosador.IdDosador))" @onclick:preventDefault>
+                                Editar pet
+                            </a>
+                        </div>
+                    </div>
+                </p>
+                <p>
+                    <span class="fs-6" title="Útilma vez visto em '@(dosador.LastSeen?.ToLocalTime().ToString() ?? "Não registrado.")'">
+                        @if (dosador.LastSeen is not null &&
+                       dosador.LastSeen.Value.ToUniversalTime() >= LastRefresh.ToUniversalTime().AddMinutes(-1.5))
+                        {
+                            <span><i class="fa-solid fa-circle" style="color: #00ff1e;"></i> online</span>
+                        }
+                        else
+                        {
+                            <span><i class="fa-solid fa-circle" style="color: #ff0000;"></i> offline</span>
+                        }
+                    </span>
+                </p>
+                <p>
+                    <span class="fs-6" title="Quantidade atual de ração: @dosador.CurrentWeight gramas.">
+                        @if (dosador.CurrentWeight > 0.9)
+                        {
+                            <span><i class="fa-solid fa-bone" style="color: #00ff1e;"></i> Contém ração</span>
+                        }
+                        else
+                        {
+                            <span><i class="fa-solid fa-bone" style="color: #ff0000;"></i> Não contém ração</span>
+                        }
+                    </span>
+                </p>
             </div>
         }
     </div>
+
+    <ModalComponent @ref="_modalEdit">
+        <Header>
+            <h3>Editar pet </h3>
+        </Header>
+        <Body>
+            <ErrorComponent Errors="ErrorsEditPet"></ErrorComponent>
+            <EditForm Model="_putDosadorViewModel" OnValidSubmit="(async ()=> await PutEditPetAndSetDosadores())">
+                <label for="editName">Nome do Pet</label>
+                <InputText class="form-control" id="editName" @bind-Value="_putDosadorViewModel.NewName"></InputText>
+                <label for="editPhoto" class="form-label mt-3 mb-0 p-0">Selecione uma nova imagem</label>
+                <InputFile id="editPhoto" class="form-control" OnChange="(async (e)=> await LoadFilesEditPet(e))"></InputFile>
+                <hr />
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <button type="button" class="btn btn-secondary" @onclick="CloseEditPet">Fechar</button>
+            </EditForm>
+        </Body>
+    </ModalComponent>
 </div>
 
 @code {
+    private static string[] _allowedFilesTypes = new string[] { "jpg", "jpeg", "png" };
+
+    private DateTime LastRefresh { get; set; }
     private List<string> Errors { get; } = new();
-    private IEnumerable<DosadorJoinUsuarioDosadorViewModel> Dosadores { get; set; } =
-        Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+    private List<string> SuccessMessages { get; } = new();
+    private List<string> ErrorsEditPet { get; } = new();
+    private IEnumerable<JoinUsuarioDosadorInfoViewModel> Dosadores { get; set; } =
+        Enumerable.Empty<JoinUsuarioDosadorInfoViewModel>();
     private StateMessage LoadDosadores { get; set; } = StateMessage.Sending;
+
+    private ModalComponent? _modalEdit { get; set; }
+
+    private AddDosadorViewModel _addDosadorViewModel { get; } = new();
+
+    private Guid? IdEditDosador { get; set; }
+    private PutDosadorViewModel _putDosadorViewModel { get; } = new();
 
     protected override async Task OnInitializedAsync()
     {
+        LastRefresh = DateTime.UtcNow;
         await TrySetDosadores();
     }
 
@@ -67,7 +146,7 @@
 
     private async Task SetDosadores()
     {
-        using var response = await _client.GetAsync("/api/dosador/all");
+        using var response = await _client.GetAsync("/api/dosador/info/all");
 
         var errorsResponse = await response.TryGetErrors();
 
@@ -77,7 +156,116 @@
             return;
         }
 
-        Dosadores = await response.Content.ReadFromJsonAsync<IEnumerable<DosadorJoinUsuarioDosadorViewModel>>()
-            ?? Enumerable.Empty<DosadorJoinUsuarioDosadorViewModel>();
+        Dosadores = await response.Content.ReadFromJsonAsync<IEnumerable<JoinUsuarioDosadorInfoViewModel>>()
+            ?? Enumerable.Empty<JoinUsuarioDosadorInfoViewModel>();
+    }
+
+    private void EditPet(Guid idDosador)
+    {
+        ErrorsEditPet.Clear();
+        IdEditDosador = idDosador;
+        _putDosadorViewModel.NewName = Dosadores.FirstOrDefault()?.Nome ?? string.Empty;
+        _putDosadorViewModel.NewImage = new byte[0];
+        _putDosadorViewModel.UpdateImg = false;
+
+        _modalEdit?.Open();
+    }
+
+    private void CloseEditPet()
+    {
+        IdEditDosador = null;
+        _modalEdit?.Close();
+    }
+
+    private async Task LoadFilesEditPet(InputFileChangeEventArgs e)
+    {
+        ErrorsEditPet.Clear();
+
+        if (e.FileCount != 1)
+        {
+            ErrorsEditPet.Add("Somente um arquivo é permitido.");
+            return;
+        }
+
+        if (!_allowedFilesTypes.Any(a => e.File.ContentType.EndsWith(a)))
+        {
+            ErrorsEditPet.Add($"É permitido apenas arquivos com extensões '{string.Join(',', _allowedFilesTypes)}'.");
+            return;
+        }
+
+        using MemoryStream memoryStream = new();
+
+        await e.File.OpenReadStream().CopyToAsync(memoryStream);
+
+        _putDosadorViewModel.UpdateImg = true;
+        _putDosadorViewModel.NewImage = memoryStream.ToArray();
+    }
+
+    private async Task PutEditPetAndSetDosadores()
+    {
+        var success = await PutEditPet();
+
+        if (!success)
+            return;
+
+        _modalEdit?.Close();
+        await TrySetDosadores();
+    }
+
+    private async Task<bool> PutEditPet()
+    {
+        const string PUT = "api/dosador?idDosador={idDosador}";
+
+        ErrorsEditPet.Clear();
+
+        try
+        {
+            using var response = await _client.PutAsJsonAsync(
+                PUT.Replace("{idDosador}", IdEditDosador.ToString()),
+                _putDosadorViewModel);
+
+            var errorsResp = await response.TryGetErrors();
+
+            if (errorsResp.ContainsError)
+            {
+                ErrorsEditPet.AddRange(errorsResp.ErrorsMessages);
+                return false;
+            }
+        }
+        catch
+        {
+            ErrorsEditPet.Add("Falha ao atualizar Pet.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task AddDosador()
+    {
+        const string POST = "api/dosador/add";
+
+        SuccessMessages.Clear();
+        Errors.Clear();
+
+        try
+        {
+            using var response = await _client.PostAsJsonAsync(POST, _addDosadorViewModel);
+
+            var errorsResp = await response.TryGetErrors();
+
+            if (errorsResp.ContainsError)
+            {
+                Errors.AddRange(errorsResp.ErrorsMessages);
+                return;
+            }
+
+            SuccessMessages.Add("Dosador adicionado com sucesso.");
+            _addDosadorViewModel.Token = string.Empty;
+        }
+        catch
+        {
+            Errors.Add("Falha ao adicionar dosador.");
+        }
     }
 }

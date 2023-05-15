@@ -108,7 +108,7 @@ public abstract class TestBase
         {
             IdDosador = dosadorToCreate.IdDosador,
             Nome = dosadorToCreate.Nome,
-            PesoMax = dosadorToCreate.PesoMax
+            ImgUrl = dosadorToCreate.ImgUrl
         });
 
         await context.SaveChangesAsync();
@@ -153,6 +153,8 @@ public abstract class TestBase
                 .AddScoped<Application.Repositories.IUserRepository, Repositories.UserRepository>()
                 .AddScoped<Application.Repositories.IDosadorRepository, Repositories.DosadorRepository>()
                 .AddScoped<Application.Repositories.IAgendamentoRepository, Repositories.AgendamentoRepository>()
+
+                .AddScoped<Application.StorageRepositories.IImgRepository, StorageRepositories.ImgRepository>()
 
                 .AddScoped<Application.Services.Interfaces.IUserService, Application.Services.Implementation.UserService>()
                 .AddScoped<Application.Services.Interfaces.IAgendamentoService, Application.Services.Implementation.AgendamentoService>()

@@ -63,7 +63,7 @@ internal class DosadorRepository : RepositoryBase, IDosadorRepository
 
         var dosadorToUpdate = _mapper.Map<DosadorDbModel>(entity);
         dosadorDb.Nome = dosadorToUpdate.Nome;
-        dosadorDb.PesoMax = dosadorToUpdate.PesoMax;
+        dosadorDb.ImgUrl = dosadorToUpdate.ImgUrl;
         
         _context.Dosadores.Update(dosadorDb);
 

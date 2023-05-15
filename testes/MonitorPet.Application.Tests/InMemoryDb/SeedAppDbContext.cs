@@ -13,13 +13,13 @@ internal class SeedAppDbContext
                 {
                     IdDosador = Mocks.DosadorMock.DosadorExample1.IdDosador,
                     Nome = Mocks.DosadorMock.DosadorExample1.Nome,
-                    PesoMax = Mocks.DosadorMock.DosadorExample1.PesoMax
+                    ImgUrl = Mocks.DosadorMock.DosadorExample1.ImgUrl
                 },
                 new DosadorDbModel
                 {
                     IdDosador = Mocks.DosadorMock.DosadorExample2.IdDosador,
                     Nome = Mocks.DosadorMock.DosadorExample2.Nome,
-                    PesoMax = Mocks.DosadorMock.DosadorExample2.PesoMax
+                    ImgUrl = Mocks.DosadorMock.DosadorExample2.ImgUrl
                 }
             }
         );

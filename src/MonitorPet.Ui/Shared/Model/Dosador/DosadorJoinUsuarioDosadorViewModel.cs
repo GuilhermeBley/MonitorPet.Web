@@ -6,5 +6,5 @@ public class DosadorJoinUsuarioDosadorViewModel
     public Guid IdDosador { get; set; }
     public int IdUsuario { get; set; }
     public string Nome { get; set; } = string.Empty;
-    public double PesoMax { get; set; }
+    public string? ImgUrl { get; set; }
 }

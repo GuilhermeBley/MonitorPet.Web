@@ -65,7 +65,7 @@ internal class UsuarioDosadorRepository : RepositoryBase, IUsuarioDosadorReposit
                 IdDosador = userDosadorDb.IdDosador,
                 IdUsuario = userDosadorDb.IdUsuario,
                 Nome = dosador.Nome,
-                PesoMax = dosador.PesoMax
+                ImgUrl = dosador.ImgUrl
             }).ToListAsync();
 
     public async Task<DosadorJoinUsuarioDosadorModel?> GetByIdUserAndIdDosador(int idUser, Guid idDosador)
@@ -80,8 +80,13 @@ internal class UsuarioDosadorRepository : RepositoryBase, IUsuarioDosadorReposit
                 IdDosador = userDosadorDb.IdDosador,
                 IdUsuario = userDosadorDb.IdUsuario,
                 Nome = dosador.Nome,
-                PesoMax = dosador.PesoMax
+                ImgUrl = dosador.ImgUrl
             }).FirstOrDefaultAsync();
+
+    public IAsyncEnumerable<JoinUsuarioDosadorInfoModel> GetInfoByIdUser(int idUser)
+    {
+        throw new NotImplementedException();
+    }
 
     public async Task<UsuarioDosadorModel?> UpdateByIdOrDefault(int id, UsuarioDosador entity)
     {

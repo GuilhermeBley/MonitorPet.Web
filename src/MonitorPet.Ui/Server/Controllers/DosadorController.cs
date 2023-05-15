@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MonitorPet.Application.Model.Dosador;
 using MonitorPet.Application.Services.Implementation;
 using MonitorPet.Application.Services.Interfaces;
 using MonitorPet.Ui.Server.Security;
 using MonitorPet.Ui.Shared.Model.Dosador;
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 
 namespace MonitorPet.Ui.Server.Controllers;
@@ -34,6 +36,23 @@ public class DosadorController : ControllerBase
         var userDosadores =
             (await _dosadorService.GetDosadoresByIdUser(ctx.RequiredIdUser))
                 .Select(d => _map.Map<DosadorJoinUsuarioDosadorViewModel>(d));
+
+        if (!userDosadores.Any())
+            return NoContent();
+
+        return Ok(userDosadores);
+    }
+
+    [HttpGet("Info/All")]
+    [Authorize]
+    public async Task<ActionResult<IEnumerable<JoinUsuarioDosadorInfoViewModel>>> GetDosadoresInfo()
+    {
+        var ctx = await _contextClaim.GetRequiredCurrentClaim();
+
+        var userDosadores =
+            (await _dosadorService.GetDosadoresInfoByIdUser(ctx.RequiredIdUser)
+            .ToListAsync())
+            .Select(d => _map.Map<JoinUsuarioDosadorInfoViewModel>(d));
 
         if (!userDosadores.Any())
             return NoContent();
@@ -82,15 +101,17 @@ public class DosadorController : ControllerBase
         return Ok(dosadorRemoved);
     }
 
-    [HttpPatch("Rename")]
+    [HttpPut()]
     [Authorize]
-    public async Task<ActionResult<DosadorJoinUsuarioDosadorViewModel>> RemoveDosador([FromQuery] Guid idDosador, 
-            [FromBody] PatchDosadorNameViewModel patchDosadorNameViewModel)
+    public async Task<ActionResult<DosadorJoinUsuarioDosadorViewModel>> UpdateDosador([FromQuery] Guid idDosador, 
+            [FromBody] PutDosadorViewModel putDosadorViewModel)
     {
+        var putDosador = _map.Map<UpdateDosadorModel>(putDosadorViewModel);
+
         var ctx = await _contextClaim.GetRequiredCurrentClaim();
 
         var dosadorUpdated = 
-            await _dosadorService.UpdateNameDosador(ctx.RequiredIdUser, idDosador, patchDosadorNameViewModel.NewName);
+            await _dosadorService.UpdateDosador(ctx.RequiredIdUser, idDosador, putDosador);
 
         if (dosadorUpdated is null)
             return NotFound();
