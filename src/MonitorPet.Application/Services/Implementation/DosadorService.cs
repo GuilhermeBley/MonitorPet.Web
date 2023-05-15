@@ -157,7 +157,7 @@ public class DosadorService : IDosadorService
 
         if (updateDosadorModel.UpdateImg)
         {
-            var imgUrl = await _imgRepository.AddImageAsync($"{idDosador.ToString()}.png", updateDosadorModel.ImgStream);
+            var imgUrl = await _imgRepository.AddImageAsync($"{idDosador.ToString()}.jpg", updateDosadorModel.ImgStream);
 
             entityToUpdate.UpdateImg(imgUrl.AbsoluteUri);
         }

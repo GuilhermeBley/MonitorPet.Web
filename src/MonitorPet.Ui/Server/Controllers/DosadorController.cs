@@ -104,7 +104,7 @@ public class DosadorController : ControllerBase
     [HttpPut()]
     [Authorize]
     public async Task<ActionResult<DosadorJoinUsuarioDosadorViewModel>> UpdateDosador([FromQuery] Guid idDosador, 
-            [FromBody] PutDosadorNameViewModel putDosadorViewModel)
+            [FromBody] PutDosadorViewModel putDosadorViewModel)
     {
         var putDosador = _map.Map<UpdateDosadorModel>(putDosadorViewModel);
 

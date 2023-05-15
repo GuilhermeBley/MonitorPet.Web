@@ -15,7 +15,13 @@ public class ViewModelsProfile : Profile
         CreateMap<Shared.Model.Agendamento.CreateAgendamentoViewModel, Application.Model.Agendamento.CreateAgendamentoModel>().ReverseMap();
         CreateMap<Shared.Model.Agendamento.UpdateAgendamentoViewModel, Application.Model.Agendamento.UpdateAgendamentoModel>().ReverseMap();
 
-        CreateMap<Shared.Model.Dosador.PutDosadorNameViewModel, Application.Model.Dosador.UpdateDosadorModel>().ReverseMap();
+        CreateMap<Shared.Model.Dosador.PutDosadorViewModel, Application.Model.Dosador.UpdateDosadorModel>()
+            .ForMember(
+                src => src.Name,
+                opt => opt.MapFrom(from => from.NewName))
+            .ForMember(
+                src => src.ImgStream,
+                opt => opt.MapFrom(from => from.NewImage == null || from.NewImage.Length < 1 ? Stream.Null : new MemoryStream(from.NewImage)));
         CreateMap<Shared.Model.Dosador.JoinUsuarioDosadorInfoViewModel, Application.Model.Dosador.JoinUsuarioDosadorInfoModel>().ReverseMap();
 
         CreateMap<Shared.Model.PesoHistorico.ConsumptionIntervalViewModel, Application.Model.PesoHistorico.ConsumptionIntervalModel>().ReverseMap();

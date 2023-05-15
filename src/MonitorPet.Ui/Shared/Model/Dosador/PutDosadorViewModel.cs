@@ -2,10 +2,10 @@
 
 namespace MonitorPet.Ui.Shared.Model.Dosador;
 
-public class PutDosadorNameViewModel
+public class PutDosadorViewModel
 {
     [Required]
     public string NewName { get; set; } = string.Empty;
     public bool UpdateImg { get; set; } = false;
-    public Stream NewImage { get; set; } = Stream.Null;
+    public byte[] NewImage { get; set; } = new byte[0];
 }
