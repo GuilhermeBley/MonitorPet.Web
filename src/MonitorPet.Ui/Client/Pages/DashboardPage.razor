@@ -202,10 +202,12 @@
 
         try
         {
+            var localDate = new DateTime(_dateForm.Day.Year, _dateForm.Day.Month, _dateForm.Day.Day, 0, 0, 0, DateTimeKind.Local);
+            
             using var response = await _client.GetAsync(
                 query
                 .Replace("{idDosador}", idDosador.ToString())
-                .Replace("{dateOffSet}", _dateForm.Day.ToString("yyyy-MM-ddT00:00:00")));
+                .Replace("{dateOffSet}", localDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")));
 
             var result = await response.TryGetErrors();
 

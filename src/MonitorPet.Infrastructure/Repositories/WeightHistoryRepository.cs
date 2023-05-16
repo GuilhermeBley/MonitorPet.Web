@@ -50,6 +50,8 @@ LIMIT @Skip, @Take;";
             if (!items.Any())
                 yield break;
 
+            items.Select(w => w.RegisteredAt = w.RegisteredAt.ToOffset(TimeSpan.Zero)).ToList();
+
             foreach (var item in items)
                 yield return item;
         }
