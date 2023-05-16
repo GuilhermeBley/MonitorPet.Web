@@ -36,7 +36,7 @@ public class ConsumptionService : IConsumptionService
 
 		await ThrowIfCannotAccessDosador(context.IdUser, idDosador);
 
-        var end = start.AddHours(24) > DateTimeOffset.Now ? DateTimeOffset.Now : start.AddHours(24);
+        var end = start.AddHours(24) > DateTimeOffset.UtcNow ? DateTimeOffset.UtcNow : start.AddHours(24);
 
         var consumptions = await GetByInterval(idDosador, start, end, TimeSpan.FromHours(2));
 
