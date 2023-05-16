@@ -148,7 +148,7 @@
         = Enumerable.Empty<JoinUsuarioDosadorInfoViewModel>();
 
     [Parameter]
-    public Guid IdDosador { get; set; }
+    public Guid? IdDosador { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -159,7 +159,8 @@
             return;
         }
 
-        IdDosador = Dosadores.FirstOrDefault()?.IdDosador ?? default;
+        if (!Dosadores.Any(d => d.IdDosador == IdDosador))
+            IdDosador = Dosadores.FirstOrDefault()?.IdDosador;
 
         await UpdateDashboard();
     }
@@ -258,7 +259,13 @@
         {
             Errors.Clear();
 
-            CurrentConsumption = await GetIntervalByIdDosador(IdDosador);
+            if (IdDosador is null)
+            {
+                Errors.Add("Dosador não selecionado.");
+                return;
+            }
+
+            CurrentConsumption = await GetIntervalByIdDosador(IdDosador.Value);
 
             if (CurrentConsumption is null)
                 return;

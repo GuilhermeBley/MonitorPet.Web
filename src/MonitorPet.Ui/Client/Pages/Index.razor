@@ -12,7 +12,7 @@
     <SuccessComponent Successes="SuccessMessages"></SuccessComponent>
 
     <div class="row text-end">
-        <div>
+        <div class="btn-group dropleft">
             <button id="addDosador" type="button" class="btn btn-outline-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="bi bi-plus-circle-fill"></i>
                 Adicionar dosadores
@@ -51,8 +51,14 @@
                             <span class="fs-3">@dosador.Nome </span>
                         </button>
                         <div class="dropdown-menu" aria-labelledby="optPet-@dosador.IdDosador">
+                            <a class="dropdown-item" href="/Dashboard/@dosador.IdDosador.ToString()">
+                                <i class="fa-solid fa-chart-simple"></i> Gráficos
+                            </a>
+                            <a class="dropdown-item" href="/agendamentos/@dosador.IdDosador.ToString()">
+                                <i class="fa-solid fa-bowl-food"></i> Agendamentos
+                            </a>
                             <a class="dropdown-item" href="#" @onclick="(() => EditPet(dosador.IdDosador))" @onclick:preventDefault>
-                                Editar pet
+                                <i class="fa-solid fa-pen-to-square"></i> Editar pet
                             </a>
                         </div>
                     </div>
