@@ -89,9 +89,9 @@ public class DosadorController : ControllerBase
         return Created($"/api/dosador?id={dosadorAdded.IdDosador}", dosadorAdded);
     }
 
-    [HttpDelete("Remove")]
+    [HttpDelete("Remove/{idDosador}")]
     [Authorize]
-    public async Task<ActionResult<DosadorJoinUsuarioDosadorViewModel>> RemoveDosador([FromQuery] Guid idDosador)
+    public async Task<ActionResult<DosadorJoinUsuarioDosadorViewModel>> RemoveDosador(Guid idDosador)
     {
         var ctx = await _contextClaim.GetRequiredCurrentClaim();
         
