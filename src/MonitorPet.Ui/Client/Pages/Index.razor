@@ -12,7 +12,7 @@
     <SuccessComponent Successes="SuccessMessages"></SuccessComponent>
 
     <div class="row text-end">
-        <div class="btn-group dropleft">
+        <div>
             <button id="addDosador" type="button" class="btn btn-outline-primary" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="bi bi-plus-circle-fill"></i>
                 Adicionar dosadores
@@ -44,10 +44,12 @@
         @foreach (var dosador in Dosadores)
         {
             <div class="col-lg-4 mt-3">
-                <img class="rounded-circle" src="@(string.IsNullOrEmpty(dosador.ImgUrl) ? Default.ImgUrl.DefaultIconUrl :  dosador.ImgUrl)" width="140" height="140">
+               
                 <p>
-                    <div class="dropdown">
-                        <button class="btn btn-light dropdown-toggle border-0 bg-transparent" type="button" id="optPet-@dosador.IdDosador" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <div class="btn-group dropright">
+                        <button class="btn btn-light border-0 bg-transparent" type="button" id="optPet-@dosador.IdDosador" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <img class="rounded-circle" src="@(string.IsNullOrEmpty(dosador.ImgUrl) ? Default.ImgUrl.DefaultIconUrl :  dosador.ImgUrl)" width="140" height="140">
+                            <br />
                             <span class="fs-3">@dosador.Nome </span>
                         </button>
                         <div class="dropdown-menu" aria-labelledby="optPet-@dosador.IdDosador">
@@ -59,6 +61,13 @@
                             </a>
                             <a class="dropdown-item" href="#" @onclick="(() => EditPet(dosador.IdDosador))" @onclick:preventDefault>
                                 <i class="fa-solid fa-pen-to-square"></i> Editar pet
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item @(Dosadores.Count() < 2 ? "disabled" : null)" 
+                                title="@(Dosadores.Count() < 2 ? "O usupario deve conter pelo menos um pet." : "Clique aqui para remover o pet.")"
+                                href="#" @onclick="(async () => await RemoveDosador(dosador.IdDosador))" 
+                                @onclick:preventDefault>
+                                <i class="fa-solid fa-trash"></i> Remover Pet
                             </a>
                         </div>
                     </div>
@@ -272,6 +281,41 @@
         catch
         {
             Errors.Add("Falha ao adicionar dosador.");
+        }
+    }
+
+    private async Task RemoveDosador(Guid idDosador)
+    {
+        const string DELETE = "api/dosador/Remove/{{idDosador}}";
+
+        SuccessMessages.Clear();
+        Errors.Clear();
+
+        if (Dosadores.Count() < 2)
+        {
+            Errors.Add("Usuário deve conter um dosador.");
+            return;
+        }
+
+        try
+        {
+            using var response = await _client.DeleteAsync(
+                DELETE.Replace("{idDosador}", idDosador.ToString()));
+
+            var errorsResp = await response.TryGetErrors();
+
+            if (errorsResp.ContainsError)
+            {
+                Errors.AddRange(errorsResp.ErrorsMessages);
+                return;
+            }
+
+            SuccessMessages.Add("Dosador removido com sucesso.");
+            _addDosadorViewModel.Token = string.Empty;
+        }
+        catch
+        {
+            Errors.Add("Falha ao remover dosador.");
         }
     }
 }
