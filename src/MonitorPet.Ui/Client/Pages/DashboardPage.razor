@@ -44,7 +44,7 @@
                                 <button type="button" class="btn btn-outline-primary @(ContainsConsumptionHistory() ? "" : "disabled")" data-toggle="modal" data-target="#data-graph">
                                     <i class="fa-solid fa-book-open"></i>
                                 </button>
-                                <input class="form-control" type="date" @oninput="(async (e)=> await UpdateDashboardAndValue(e))" value="@_dateForm.Day.ToString("yyyy-MM-dd")">
+                                <input class="form-control" type="date" @onchange="(async (e)=> await UpdateDashboardAndValue(e))" value="@_dateForm.Day.ToString("yyyy-MM-dd")">
                                 </input>
                             </div>
                         </div>
@@ -205,7 +205,7 @@
             using var response = await _client.GetAsync(
                 query
                 .Replace("{idDosador}", idDosador.ToString())
-                .Replace("{dateOffSet}", _dateForm.Day.ToString("yyyy-MM-ddT00:00:00")));
+                .Replace("{dateOffSet}", _dateForm.Day.ToUniversalTime().ToString("yyyy-MM-ddT00:00:00")));
 
             var result = await response.TryGetErrors();
 
@@ -227,15 +227,28 @@
     private async Task ChangeDosador(DosadorJoinUsuarioDosadorViewModel modelToChange)
     {
         IdDosador = modelToChange.IdDosador;
-        await Task.CompletedTask;
+        await UpdateDashboard();
     }
 
     private async Task UpdateDashboardAndValue(ChangeEventArgs changeEventArgs)
     {
-        _dateForm.Day = DateTime.ParseExact(
-            changeEventArgs.Value?.ToString() ?? string.Empty,
+        Errors.Clear();
+
+        var canConvert = DateTime.TryParseExact(
+            changeEventArgs.Value?.ToString(),
             "yyyy-MM-dd",
-            System.Globalization.CultureInfo.InvariantCulture);
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None,
+            out DateTime result);
+
+        if (!canConvert)
+        {
+            Errors.Add("Data inválida.");
+            return;
+        }
+
+        _dateForm.Day = result;
+
         await UpdateDashboard();
     }
 
@@ -290,9 +303,9 @@
 
         string[] labels;
         if (_dateForm.ConsumptionType == ConsumptionType.Daily)
-            labels = validConsumptions.Select(c => c.Start.ToString("HH:mm")).ToArray();
+            labels = validConsumptions.Select(c => c.Start.ToLocalTime().ToString("HH:mm")).ToArray();
         else
-            labels = validConsumptions.Select(c => c.Start.ToString("dd-MMM")).ToArray();
+            labels = validConsumptions.Select(c => c.Start.ToLocalTime().ToString("dd-MMM")).ToArray();
 
         BarDataset<double> dataset = new(validConsumptions.Select(c => c.QttConsumption))
             {
