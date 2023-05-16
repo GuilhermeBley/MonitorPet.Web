@@ -142,7 +142,7 @@
             {4, "Quinta"},
             {5, "Sexta"},
             {6, "Sábado"},
-                                                                        };
+                                                                            };
 
     private string? ClassUpdateModalCss => IdDosador == default || Id == default ? null : "d-block";
     private string? ClassCreateModalCss => IdDosadorToCreate == default ? null : "d-block";
@@ -159,7 +159,7 @@
     private StateMessage AgendamentosListState = StateMessage.None;
 
     [Parameter]
-    public Guid IdDosador { get; set; } = Guid.Empty;
+    public Guid? IdDosador { get; set; }
 
     [Parameter]
     public Guid IdDosadorToCreate { get; set; } = Guid.Empty;
@@ -171,7 +171,8 @@
     {
         Dosadores = await GetDosadores();
 
-        IdDosador = Dosadores.FirstOrDefault()?.IdDosador ?? default;
+        if (!Dosadores.Any(d => d.IdDosador == IdDosador))
+            IdDosador = Dosadores.FirstOrDefault()?.IdDosador;
 
         await UpdateAgendamentoList();
     }
@@ -184,13 +185,19 @@
 
     private void OpenModalCreateAgendamento()
     {
-        IdDosadorToCreate = IdDosador;
+        if (IdDosador is null)
+        {
+            Errors.Add("Dosador não selecionado.");
+            return;
+        }
+
+        IdDosadorToCreate = IdDosador.Value;
         _nav.NavigateTo($"/agendamentos/create/{IdDosador.ToString()}");
     }
 
     private void ReturnToHomeDosadorAgendamento()
     {
-        Guid idDosador;
+        Guid? idDosador;
         if (IdDosadorToCreate != default)
             idDosador = IdDosadorToCreate;
         else
@@ -324,11 +331,22 @@
     {
         AgendamentosListState = StateMessage.Sending;
 
-        Agendamentos.Clear();
+        try
+        {
+            if (IdDosador is null)
+            {
+                Errors.Add("Dosador não selecionado.");
+                return;
+            }
 
-        Agendamentos.AddRange(await GetAgendamentos(IdDosador));
+            Agendamentos.Clear();
 
-        AgendamentosListState = StateMessage.Sent;
+            Agendamentos.AddRange(await GetAgendamentos(IdDosador.Value));
+        }
+        finally
+        {
+            AgendamentosListState = StateMessage.Sent;
+        }
     }
 
     private async Task DeleteAgendamento(int id)
@@ -372,7 +390,7 @@
             {
                 DiaSemana = agendamentoFound.DiaSemana,
                 HoraAgendada = agendamentoFound.HoraAgendada,
-                IdDosador = IdDosador,
+                IdDosador = IdDosador.HasValue ? IdDosador.Value : default,
                 QtdeLiberadaGr = agendamentoFound.QtdeLiberadaGr
             };
     }
