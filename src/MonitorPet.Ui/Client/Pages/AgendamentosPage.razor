@@ -16,6 +16,7 @@
     @if (Dosadores.Any())
     {
         <SelectDosadorComponent Dosadores="Dosadores"
+                            StartDosadorSelected="IdDosador"
                             OnChangeDosador="(async (model)=> await ChangeDosador(model))">
         </SelectDosadorComponent>
     }
@@ -142,7 +143,7 @@
             {4, "Quinta"},
             {5, "Sexta"},
             {6, "Sábado"},
-                                                                            };
+                                                                                };
 
     private string? ClassUpdateModalCss => IdDosador == default || Id == default ? null : "d-block";
     private string? ClassCreateModalCss => IdDosadorToCreate == default ? null : "d-block";
