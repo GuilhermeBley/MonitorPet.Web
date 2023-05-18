@@ -22,8 +22,10 @@
             <!-- Select Dosador -->
             @if (Dosadores.Any())
             {
-                <SelectDosadorComponent Dosadores="Dosadores"
-                                    OnChangeDosador="(async (model)=> await ChangeDosador(model))">
+                <SelectDosadorComponent 
+                    Dosadores="Dosadores"
+                    StartDosadorSelected="IdDosador"
+                    OnChangeDosador="(async (model)=> await ChangeDosador(model))">
                 </SelectDosadorComponent>
             }
 

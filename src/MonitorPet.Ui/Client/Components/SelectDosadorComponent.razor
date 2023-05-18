@@ -31,9 +31,14 @@
     [Parameter]
     public EventCallback<JoinUsuarioDosadorInfoViewModel> OnChangeDosador { get; set; }
 
+    [Parameter]
+    public Guid? StartDosadorSelected { get; set; }
+
     protected override void OnInitialized()
     {
-        CurrentSelected = Dosadores.FirstOrDefault();
+        CurrentSelected = 
+            Dosadores.FirstOrDefault(d => d.IdDosador == StartDosadorSelected)
+            ?? Dosadores.FirstOrDefault();
     }
 
     private async Task ChangeOptionsAndCallEvent(JoinUsuarioDosadorInfoViewModel dosadorSelected)

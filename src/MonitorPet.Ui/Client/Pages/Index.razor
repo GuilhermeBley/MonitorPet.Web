@@ -276,6 +276,8 @@
             }
 
             SuccessMessages.Add("Dosador adicionado com sucesso.");
+
+            await TrySetDosadores();
             _addDosadorViewModel.Token = string.Empty;
         }
         catch
