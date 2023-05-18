@@ -95,7 +95,7 @@
 
         try
         {
-            var resultCreateUser = await _client.PostAsJsonAsync("api/user/create", UserModelToCreate);
+            var resultCreateUser = await _client.PostAsJsonAsync("api/user", UserModelToCreate);
 
             var errorMessage = await resultCreateUser.TryGetErrors();
 
