@@ -18,6 +18,7 @@ internal class ImgRepository : IImgRepository
 
     public async Task<Uri> AddImageAsync(string fileName, Stream file)
     {
+        await _container.DeleteBlobIfExistsAsync(fileName);
         await _container.UploadBlobAsync(fileName, file);
 
         return GetUri(fileName);
