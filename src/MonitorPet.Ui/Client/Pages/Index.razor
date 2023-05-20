@@ -72,8 +72,8 @@
                         </div>
                     </div>
                 </p>
-                <p>
-                    <span class="fs-6" title="Útilma vez visto em '@(dosador.LastSeen?.ToLocalTime().ToString() ?? "Não registrado.")'">
+                <p class="mb-0">
+                    <span class="fs-5" title="Útilma vez visto em '@(dosador.LastSeen?.ToLocalTime().ToString() ?? "Não registrado.")'">
                         @if (dosador.LastSeen is not null &&
                        dosador.LastSeen.Value.ToUniversalTime() >= LastRefresh.ToUniversalTime().AddMinutes(-1.5))
                         {
@@ -86,7 +86,12 @@
                     </span>
                 </p>
                 <p>
-                    <span class="fs-6" title="Quantidade atual de ração: @dosador.CurrentWeight gramas.">
+                    <small class="text-secondary" style="font-size: 0.8rem">
+                        @(dosador.LastSeen.HasValue ? $"Última vez visto em: '{dosador.LastSeen.Value.ToLocalTime().ToString()}'" : null)
+                    </small>
+                </p>
+                <p class="mb-0">
+                    <span class="fs-5" title="Quantidade atual de ração: @dosador.CurrentWeight gramas.">
                         @if (dosador.CurrentWeight > 0.9)
                         {
                             <span><i class="fa-solid fa-bone" style="color: #00ff1e;"></i> Contém ração</span>
@@ -96,6 +101,11 @@
                             <span><i class="fa-solid fa-bone" style="color: #ff0000;"></i> Não contém ração</span>
                         }
                     </span>
+                </p>
+                <p class="m-0 p-0">
+                    <small class="text-secondary" style="font-size: 0.8rem">
+                        Quantidade atual de ração: @dosador.CurrentWeight gramas.
+                    </small>
                 </p>
             </div>
         }
@@ -113,8 +123,15 @@
                 <label for="editPhoto" class="form-label mt-3 mb-0 p-0">Selecione uma nova imagem</label>
                 <InputFile id="editPhoto" class="form-control" OnChange="(async (e)=> await LoadFilesEditPet(e))"></InputFile>
                 <hr />
-                <button type="submit" class="btn btn-primary">Salvar</button>
-                <button type="button" class="btn btn-secondary" @onclick="CloseEditPet">Fechar</button>
+                <button type="submit" 
+                    class="btn btn-primary @(_onPutMessage == StateMessage.Sending ? "disabled" : null)">
+                    Salvar
+                </button>
+                <button type="button"
+                        class="btn btn-secondary @(_onPutMessage == StateMessage.Sending ? "disabled" : null)"
+                        @onclick="CloseEditPet">
+                    Fechar
+                </button>
             </EditForm>
         </Body>
     </ModalComponent>
@@ -137,6 +154,8 @@
 
     private Guid? IdEditDosador { get; set; }
     private PutDosadorViewModel _putDosadorViewModel { get; } = new();
+
+    private StateMessage _onPutMessage = StateMessage.None;
 
     protected override async Task OnInitializedAsync()
     {
@@ -179,7 +198,7 @@
     {
         ErrorsEditPet.Clear();
         IdEditDosador = idDosador;
-        _putDosadorViewModel.NewName = Dosadores.FirstOrDefault()?.Nome ?? string.Empty;
+        _putDosadorViewModel.NewName = Dosadores.FirstOrDefault(d => d.IdDosador == idDosador)?.Nome ?? string.Empty;
         _putDosadorViewModel.NewImage = new byte[0];
         _putDosadorViewModel.UpdateImg = false;
 
@@ -218,13 +237,22 @@
 
     private async Task PutEditPetAndSetDosadores()
     {
-        var success = await PutEditPet();
+        try
+        {
+            _onPutMessage = StateMessage.Sending;
 
-        if (!success)
-            return;
+            var success = await PutEditPet();
 
-        _modalEdit?.Close();
-        await TrySetDosadores();
+            if (!success)
+                return;
+
+            _modalEdit?.Close();
+            await TrySetDosadores();
+        }
+        finally
+        {
+            _onPutMessage = StateMessage.Sent;
+        }
     }
 
     private async Task<bool> PutEditPet()

@@ -1,6 +1,6 @@
 ﻿@using MonitorPet.Ui.Shared.Model.Agendamento
 
-<EditForm Model="CreateModel" OnValidSubmit="(async()=>await OnValid.InvokeAsync(CreateModel))">
+<EditForm Model="CreateModel" OnValidSubmit="(async()=>await ValidAgendamento())">
     <div class="input-group mb-2 text-center">
         <div class="input-group-prepend">
             <label class="input-group-text" for="form-select-day">Dia da semana</label>
@@ -32,9 +32,9 @@
     </div>
     <div class="input-group mb-3">
         <div class="input-group-prepend">
-            <div class="input-group-text">Quantidade de ração</div>
+            <div class="input-group-text">Quantidade de ração (gramas)</div>
         </div>
-        <InputNumber class="form-control" @bind-Value="CreateModel.QtdeLiberadaGr"/>
+        <InputNumber class="form-control text-center" @bind-Value="CreateModel.QtdeLiberadaGr"/>
     </div>
 
     @Footer
@@ -52,6 +52,8 @@
             {6, "Sábado"},
                             };
 
+    private StateMessage _onValid = StateMessage.None;
+
     [Parameter]
     public CreateAgendamentoViewModel CreateModel { get; set; } = new();
 
@@ -60,6 +62,20 @@
 
     [Parameter]
     public RenderFragment? Footer { get; set; }
+
+    private async Task ValidAgendamento()
+    {
+        try
+        {
+            _onValid = StateMessage.Sending;
+
+            await OnValid.InvokeAsync(CreateModel);
+        }
+        finally
+        {
+            _onValid = StateMessage.Sent;
+        }
+    }
 
     private void ChangeDayValue(string? day)
     {
