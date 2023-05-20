@@ -85,9 +85,11 @@
 
     <div class="input-group">
         <h1 class="text-primary"><i class="fa-solid fa-alarm-clock"></i> Agendamentos</h1>
-        <button type="button" class="btn btn-outline-success border-0 ms-auto"
-                @onclick="OpenModalCreateAgendamento" disabled="@(IdDosador==default)">
-            <span class="text-complete">Novo agendamento  </span><i class="fa-sharp fa-solid fa-plus"></i>
+        <button type="button" class="btn btn-outline-primary border-0 ms-auto"
+                data-toggle="modal"
+                data-target="#modalLiberarAgora"
+                disabled="@(IdDosador==default)">
+            <span class="text-complete">Liberar agora  </span><i class="fa-solid fa-bowl-food"></i>
         </button>
     </div>
     <hr>
@@ -97,6 +99,17 @@
         {
             <LoadComponent></LoadComponent>
         }
+
+        <div class="col-md-4">
+            <div class="schedule-time input-group">
+                <div class="input-group-text p-0 mx-auto ps-2">
+                    <button type="button" class="btn btn-outline-success border-0 ms-auto"
+                            @onclick="OpenModalCreateAgendamento" disabled="@(IdDosador==default)">
+                        Novo agendamento <i class="fa-sharp fa-solid fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
 
         @foreach (var agendamento in Agendamentos)
         {
@@ -131,6 +144,35 @@
             </div>
         }
     </div>
+
+
+    <!-- Modal liberar agora -->
+    <div class="modal fade" id="modalLiberarAgora" tabindex="-1" role="dialog" aria-labelledby="modalLiberarAgoraLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalLiberarAgoraLabel">Liberar agora</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Deseja liberar a ração agora para o seu Pet?
+                </div>
+                <div class="modal-footer">
+                    <button 
+                        type="button" 
+                        class="btn btn-primary" 
+                        @onclick="(async ()=> await ReleaseNow())"
+                        data-dismiss="modal">
+                        Liberar agora
+                    </button>
+                    <button type="button" class="btn btn-secondary" 
+                        data-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @code {
@@ -143,7 +185,7 @@
             {4, "Quinta"},
             {5, "Sexta"},
             {6, "Sábado"},
-                                                                                };
+                                                                                                    };
 
     private string? ClassUpdateModalCss => IdDosador == default || Id == default ? null : "d-block";
     private string? ClassCreateModalCss => IdDosadorToCreate == default ? null : "d-block";
@@ -432,6 +474,28 @@
         {
             Errors.Add("Falha ao ativar/desativar.");
         }
+    }
+
+    private async Task ReleaseNow()
+    {
+        const string PATCH = "/api/agendamento/lastRelease/{idDosador}";
+
+        Errors.Clear();
+        Successes.Clear();
+
+        var currentDosador = Dosadores.First(d => d.IdDosador == IdDosador);
+
+        if (currentDosador.LastRelease is not null &&
+            currentDosador.LastRelease.Value.AddMinutes(5) > DateTime.UtcNow)
+        {
+            Successes.Add("Solicitação de liberação de ração realizada.");
+            return;
+        }
+
+        using var response = await _client.PatchAsync(
+            PATCH.Replace("{idDosador}", IdDosador.ToString()), null);
+
+        Successes.Add("Solicitação de liberação de ração realizada.");
     }
 
     private async Task ChangeDosador(DosadorJoinUsuarioDosadorViewModel modelToChange)

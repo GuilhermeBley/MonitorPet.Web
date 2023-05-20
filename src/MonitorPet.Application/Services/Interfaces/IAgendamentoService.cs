@@ -41,4 +41,9 @@ public interface IAgendamentoService
     /// <exception cref="ForbiddenCoreException"></exception>
     /// <exception cref="CoreException"></exception>
     Task<AgendamentoModel> UpdateById(int id, UpdateAgendamentoModel updateAgendamentoModel);
+
+    /// <summary>
+    /// Update last release
+    /// </summary>
+    Task UpdateLastRelease(Guid idDosador);
 }

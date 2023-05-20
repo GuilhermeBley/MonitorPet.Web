@@ -9,19 +9,24 @@ namespace MonitorPet.Application.Services.Implementation;
 
 public class AgendamentoService : IAgendamentoService
 {
+    private const int MAX_TIME_LAST_RELEASE_MINUTES = 5;
+
     private readonly ContextClaim _contextClaim;
     private readonly IAgendamentoRepository _agendamentoRepository;
+    private readonly IDosadorRepository _dosadorRepository;
     private readonly IUsuarioDosadorRepository _usuarioDosadorRepository;
     private readonly IUnitOfWork _uoW;
 
     public AgendamentoService(
         ContextClaim contextClaim,
         IAgendamentoRepository agendamentoRepository,
+        IDosadorRepository dosadorRepository,
         IUnitOfWork uoW,
         IUsuarioDosadorRepository usuarioDosadorRepository)
     {
         _contextClaim = contextClaim;
         _agendamentoRepository = agendamentoRepository;
+        _dosadorRepository = dosadorRepository;
         _uoW = uoW;
         _usuarioDosadorRepository = usuarioDosadorRepository;
     }
@@ -122,6 +127,30 @@ public class AgendamentoService : IAgendamentoService
         await transaction.SaveChangesAsync();
 
         return agendamentoUpdated;
+    }
+
+    public async Task UpdateLastRelease(Guid idDosador)
+    {
+        var user = await _contextClaim.GetRequiredCurrentClaim();
+
+        var idUser = user.RequiredIdUser;
+
+        using var connection = await _uoW.OpenConnectionAsync();
+
+        await ThrowIfCannotAccessDosador(idUser, idDosador);
+
+        using var transaction = await _uoW.BeginTransactionAsync();
+
+        var dosador = await _dosadorRepository.GetByIdOrDefault(idDosador)
+            ?? throw new Core.Exceptions.NotFoundCoreException();
+
+        if (dosador.LastRelease is not null &&
+            dosador.LastRelease.Value.AddMinutes(MAX_TIME_LAST_RELEASE_MINUTES) > DateTime.UtcNow)
+            throw new Core.Exceptions.ConflictCoreException("Solicitação de liberação de ração já realizada.");
+
+        await _dosadorRepository.UpdateLastRelease(idDosador, DateTime.UtcNow);
+
+        await transaction.SaveChangesAsync();
     }
 
     /// <summary>

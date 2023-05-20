@@ -88,4 +88,12 @@ public class AgendamentoController : ControllerBase
             _map.Map<AgendamentoViewModel>(agendamentoUpdated)
         );
     }
+
+    [HttpPatch("lastRelease/{idDosador}")]
+    public async Task<ActionResult<AgendamentoViewModel>> PatchAgendamento(Guid idDosador)
+    {
+        await _agendamentoService.UpdateLastRelease(idDosador);
+
+        return Ok();
+    }
 }
