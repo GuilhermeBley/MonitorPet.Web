@@ -4,4 +4,5 @@ public class JoinUsuarioDosadorInfoViewModel : DosadorJoinUsuarioDosadorViewMode
 {
     public double CurrentWeight { get; set; }
     public DateTime? LastSeen { get; set; }
+    public DateTime? LastRelease{ get; set; }
 }

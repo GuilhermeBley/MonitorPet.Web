@@ -106,7 +106,8 @@ public class UsuarioDosadorRepository : RepositoryBase, IUsuarioDosadorRepositor
 	            d.ImgUrl ImgUrl,
 	            d.Nome Nome,
                 (SELECT PesoGr FROM monitorpet.historicopeso his WHERE his.IdDosador = d.IdDosador ORDER BY DateAt DESC LIMIT 0,1) CurrentWeight,
-                d.UltimaAtualizacao LastSeen
+                d.UltimaAtualizacao LastSeen,
+                d.UltimaLiberacao LastRelease
             FROM monitorpet.dosadorusuario ud
             INNER JOIN monitorpet.dosador d
 	            ON d.IdDosador = ud.IdDosador
