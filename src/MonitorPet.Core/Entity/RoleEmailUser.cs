@@ -4,16 +4,14 @@ public class RoleEmailUser : Entity
 {
     public int Id { get; private set; }
     public int UserId { get; private set; }
-    public HashSet<string> Roles { get; } = new();
+    public EmailConfigType Role { get; }
 
-    private RoleEmailUser(int id, int userId, HashSet<string> roles)
+    private RoleEmailUser(int id, int userId, EmailConfigType role)
     {
         Id = id;
         UserId = userId;
-        Roles = roles;
+        Role = role;
     }
-
-
 
     public override bool Equals(object? obj)
     {
@@ -26,7 +24,7 @@ public class RoleEmailUser : Entity
 
         if (!this.Id.Equals(entityToCheck.Id) ||
             !this.UserId.Equals(entityToCheck.UserId) ||
-            !this.Roles.Equals(entityToCheck.Roles))
+            !this.Role.Equals(entityToCheck.Role))
             return false;
 
         return true;
@@ -36,14 +34,14 @@ public class RoleEmailUser : Entity
         return base.GetHashCode() * 534534345;
     }
 
-    public static RoleEmailUser Create(int id, int userId, params string[] roles)
+    public static RoleEmailUser Create(int id, int userId, EmailConfigType role)
     {
         if (userId < 1)
             throw new Core.Exceptions.CommonCoreException("Id de usuário inválido.");
 
-        return new RoleEmailUser(id, userId, roles.ToHashSet());
+        return new RoleEmailUser(id, userId, role);
     }
 
-    public static RoleEmailUser CreateWithDefaultId(int userId, params string[] roles)
-        => Create(1, userId, roles);
+    public static RoleEmailUser CreateWithDefaultId(int userId, EmailConfigType role)
+        => Create(1, userId, role);
 }
