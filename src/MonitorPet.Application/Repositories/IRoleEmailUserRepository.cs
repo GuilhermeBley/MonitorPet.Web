@@ -5,5 +5,5 @@ namespace MonitorPet.Application.Repositories;
 
 public interface IRoleEmailUserRepository : IRepositoryBase<RoleEmailUser, RoleEmailUserModel, int>
 {
-    IEnumerable<QueryRoleEmailUserModel> GetByIdUser(int idUser);
+    Task<IEnumerable<QueryRoleEmailUserModel>> GetByIdUser(int idUser);
 }
