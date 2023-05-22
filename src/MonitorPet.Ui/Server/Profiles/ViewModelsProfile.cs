@@ -26,5 +26,9 @@ public class ViewModelsProfile : Profile
 
         CreateMap<Shared.Model.PesoHistorico.ConsumptionIntervalViewModel, Application.Model.PesoHistorico.ConsumptionIntervalModel>().ReverseMap();
         CreateMap<Shared.Model.PesoHistorico.ConsumptionViewModel, Application.Model.PesoHistorico.ConsumptionModel>().ReverseMap();
+
+        CreateMap<Shared.Model.Email.CreateOrUpdateRoleEmailUserViewModel, Application.Model.Email.CreateOrUpdateRoleEmailUserModel>().ReverseMap();
+        CreateMap<Shared.Model.Email.QueryRoleEmailUserViewModel, Application.Model.Email.QueryRoleEmailUserModel>().ReverseMap();
+        CreateMap<Shared.Model.Email.EmailTypeViewModel, Application.Model.Email.EmailTypeModel>().ReverseMap();
     }
 }
