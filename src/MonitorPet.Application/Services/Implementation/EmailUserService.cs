@@ -61,6 +61,17 @@ public class EmailUserService : IEmailUserService
         return roles;
     }
 
+    public async Task<IEnumerable<EmailTypeModel>> GetAvailables(CancellationToken cancellationToken = default)
+    {
+        var ctx = await _contextClaim.GetRequiredCurrentClaim();
+
+        ctx.ThrowIfIsntLogged();
+
+        using var connection = await _uoW.OpenConnectionAsync();
+
+        return await _emailTypeRepository.GetAll();
+    }
+
     public async Task<IEnumerable<QueryRoleEmailUserModel>> GetByIdUser(int idUser, CancellationToken cancellationToken = default)
     {
         var ctx = await _contextClaim.GetRequiredCurrentClaim();
