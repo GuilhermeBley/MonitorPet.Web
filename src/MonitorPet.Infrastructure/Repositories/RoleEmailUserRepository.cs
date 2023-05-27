@@ -55,14 +55,14 @@ WHERE Id=@Id;",
         => await _connection.QueryAsync<QueryRoleEmailUserModel>(
                 @"
 SELECT 
-	Id Id, 
-    IdUsuario UserId, 
-    IdTipoEmail EmailTypeId,
-    TipoEnvio Type, 
-    Descricao Description
+	r.Id Id, 
+    r.IdUsuario UserId, 
+    r.IdTipoEmail EmailTypeId,
+    t.TipoEnvio Type, 
+    t.Descricao Description
 FROM monitorpet.regraemailuser r
-INNER JOIN monitorpet_tipoemail t
-	ON r.IdTipoEmail = t.Id;
+INNER JOIN monitorpet.tipoemail t
+	ON r.IdTipoEmail = t.Id
 WHERE IdUsuario=@IdUsuario;",
                 new { IdUsuario = idUser },
                 transaction: _transaction

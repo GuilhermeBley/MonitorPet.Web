@@ -106,13 +106,13 @@
                         id="@(emailConfig.Type)-config" 
                         checked="@(_createOrUpdateRoleEmailUserModel.Roles.Contains(emailConfig.Type))">
                     <label class="form-check-label" for="@(emailConfig.Type)-config">
-                        Default checkbox
+                        @emailConfig.Description
                     </label>
                 </div>
             }
 
 
-            <div class="form-group mt-2 mb-5 text-start">
+            <div class="form-group mt-2 mb-5 text-start" @onclick="(async ()=> await TryCreateOrUpdate())">
                 <button type="submit" class="btn btn-outline-primary @(_mailsAvailables.Any() ? null : "disabled" )">Alterar</button>
             </div>
         </div>
@@ -325,6 +325,11 @@
                 return _rolesEmails;
             }
 
+            if (result.StatusCode == System.Net.HttpStatusCode.NoContent)
+            {
+                return _rolesEmails;
+            }
+
             return await result.Content.ReadFromJsonAsync<IEnumerable<QueryRoleEmailUserViewModel>>()
                 ?? _rolesEmails;
         }
@@ -348,6 +353,11 @@
             if (resultErrors.ContainsError)
             {
                 Errors.AddRange(resultErrors.ErrorsMessages);
+                return _mailsAvailables;
+            }
+
+            if (result.StatusCode == System.Net.HttpStatusCode.NoContent)
+            {
                 return _mailsAvailables;
             }
 
