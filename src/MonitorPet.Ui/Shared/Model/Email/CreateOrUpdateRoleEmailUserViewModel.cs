@@ -2,5 +2,5 @@
 
 public class CreateOrUpdateRoleEmailUserViewModel
 {
-    public IEnumerable<string> Roles { get; } = Enumerable.Empty<string>();
+    public List<string> Roles { get; } = new List<string>();
 }
