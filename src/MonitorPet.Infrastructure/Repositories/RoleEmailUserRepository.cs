@@ -15,8 +15,8 @@ internal class RoleEmailUserRepository : RepositoryBase, IRoleEmailUserRepositor
 
     public async Task<RoleEmailUserModel> Create(RoleEmailUser entity)
         => await _connection.QueryFirstOrDefaultAsync<RoleEmailUserModel>(
-            @"INSERT INTO monitorpet.regraemailuser (UserId, EmailTypeId) VALUES (@UserId, @EmailTypeId);"+
-            @"SELECT Id Id, IdUsuario UserId, IdTipoEmail EmailTypeId FROM monitorpet.regraemailuser;
+            @"INSERT INTO monitorpet.regraemailuser (IdUsuario, IdTipoEmail) VALUES (@UserId, @EmailTypeId);" +
+            @"SELECT Id Id, IdUsuario UserId, IdTipoEmail EmailTypeId FROM monitorpet.regraemailuser
 WHERE Id=last_insert_id();",
             new { UserId = entity.UserId, EmailTypeId = entity.Role.Id },
             transaction: _transaction

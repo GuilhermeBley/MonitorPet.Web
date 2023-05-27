@@ -285,6 +285,8 @@
     {
         const string PATCH = "api/email";
 
+        ClearAlerts();
+
         try
         {
             using var content = JsonContent.Create(_createOrUpdateRoleEmailUserModel);
