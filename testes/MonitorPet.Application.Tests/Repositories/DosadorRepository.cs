@@ -73,4 +73,9 @@ internal class DosadorRepository : RepositoryBase, IDosadorRepository
             await _context.Dosadores.FirstOrDefaultAsync(u => u.IdDosador == id)
         );
     }
+
+    public Task<DosadorModel?> UpdateLastRelease(Guid IdDosador, DateTime lastRelease)
+    {
+        throw new NotImplementedException();
+    }
 }

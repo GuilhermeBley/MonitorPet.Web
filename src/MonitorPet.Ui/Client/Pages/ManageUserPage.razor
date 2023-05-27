@@ -1,5 +1,6 @@
 ﻿@page "/ManageUser"
 @using MonitorPet.Ui.Client.Services
+@using MonitorPet.Ui.Shared.Model.Email
 @using MonitorPet.Ui.Shared.Model.User
 
 @inject HttpClient _client
@@ -81,12 +82,41 @@
                         <ValidationMessage For="(() => UpdatePassword.ConfirmPassword)"></ValidationMessage>
                     </div>
                 </div>
-                
+
                 <div class="form-group mt-2 mb-5 text-start">
                     <button type="submit" class="btn btn-outline-primary">Alterar</button>
                 </div>
             </EditForm>
         </div>
+    </div>
+
+    <hr />
+    <div class="row">
+
+        <h3 class="h3 mb-3">Configurações de e-mail</h3>
+
+        <div>
+            @foreach (var emailConfig in _mailsAvailables)
+            {
+                <div class="form-check">
+                    <input @onchange="((e)=>ChangeInputEmailConfig(e, emailConfig.Type))"
+                        class="form-check-input" 
+                        type="checkbox" 
+                        value="" 
+                        id="@(emailConfig.Type)-config" 
+                        checked="@(_createOrUpdateRoleEmailUserModel.Roles.Contains(emailConfig.Type))">
+                    <label class="form-check-label" for="@(emailConfig.Type)-config">
+                        @emailConfig.Description
+                    </label>
+                </div>
+            }
+
+
+            <div class="form-group mt-2 mb-5 text-start" @onclick="(async ()=> await TryCreateOrUpdate())">
+                <button type="submit" class="btn btn-outline-primary @(_mailsAvailables.Any() ? null : "disabled" )">Alterar</button>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -95,10 +125,17 @@
     private List<string> Infos { get; } = new();
     private List<string> Suc { get; } = new();
 
+    private IEnumerable<EmailTypeViewModel> _mailsAvailables
+        = Enumerable.Empty<EmailTypeViewModel>();
+
+    private IEnumerable<QueryRoleEmailUserViewModel> _rolesEmails
+        = Enumerable.Empty<QueryRoleEmailUserViewModel>();
+
     private UpdateUserViewModel UserModel { get; set; } = new();
     private UpdateUserViewModel? OldUserModel { get; set; }
 
     private UpdatePasswordViewModel UpdatePassword { get; set; } = new();
+    private CreateOrUpdateRoleEmailUserViewModel _createOrUpdateRoleEmailUserModel { get; } = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -116,6 +153,8 @@
                 Name = currUser.Name,
                 NickName = currUser.NickName
             };
+
+        await TryUpdateEmailConfig();
 
         UserModel.Email = currUser.Email;
         UserModel.Name = currUser.Name;
@@ -178,11 +217,11 @@
             Suc.Add("Informações do usuário atualizadas com sucesso!");
 
             OldUserModel = new()
-            {
-                Email = UserModel.Email,
-                Name = UserModel.Name,
-                NickName = UserModel.NickName
-            };
+                {
+                    Email = UserModel.Email,
+                    Name = UserModel.Name,
+                    NickName = UserModel.NickName
+                };
         }
         catch
         {
@@ -231,10 +270,129 @@
         return false;
     }
 
+    private async Task TryUpdateEmailConfig(bool clearErrors = true)
+    {
+        if (clearErrors)
+            ClearAlerts();
+
+        _mailsAvailables = await TryGetAvailables();
+        _rolesEmails = await TryGetFromUser();
+        _createOrUpdateRoleEmailUserModel.Roles.Clear();
+        _createOrUpdateRoleEmailUserModel.Roles.AddRange(_rolesEmails.Select(r => r.Type));
+    }
+
+    private async Task<bool> TryCreateOrUpdate()
+    {
+        const string PATCH = "api/email";
+
+        ClearAlerts();
+
+        try
+        {
+            using var content = JsonContent.Create(_createOrUpdateRoleEmailUserModel);
+
+            using var response = await _client.PatchAsync(PATCH, content);
+
+            var resultErrors = await response.TryGetErrors();
+
+            if (resultErrors.ContainsError)
+            {
+                Errors.AddRange(resultErrors.ErrorsMessages);
+                return false;
+            }
+
+            Suc.Add("Configuração de e-mail atualizada com sucesso.");
+            return true;
+        }
+        catch
+        {
+            Errors.Add("Falha ao atualizar.");
+            return false;
+        }
+    }
+
+    private async Task<IEnumerable<QueryRoleEmailUserViewModel>> TryGetFromUser()
+    {
+        const string GET = "api/email";
+
+        try
+        {
+            using var result = await _client.GetAsync(GET);
+
+            var resultErrors = await result.TryGetErrors();
+
+            if (resultErrors.ContainsError)
+            {
+                Errors.AddRange(resultErrors.ErrorsMessages);
+                return _rolesEmails;
+            }
+
+            if (result.StatusCode == System.Net.HttpStatusCode.NoContent)
+            {
+                return _rolesEmails;
+            }
+
+            return await result.Content.ReadFromJsonAsync<IEnumerable<QueryRoleEmailUserViewModel>>()
+                ?? _rolesEmails;
+        }
+        catch
+        {
+            Errors.Add("Erro durante coleta de e-mails do usuário.");
+            return _rolesEmails;
+        }
+    }
+
+    private async Task<IEnumerable<EmailTypeViewModel>> TryGetAvailables()
+    {
+        const string GET = "api/email/Availables";
+
+        try
+        {
+            using var result = await _client.GetAsync(GET);
+
+            var resultErrors = await result.TryGetErrors();
+
+            if (resultErrors.ContainsError)
+            {
+                Errors.AddRange(resultErrors.ErrorsMessages);
+                return _mailsAvailables;
+            }
+
+            if (result.StatusCode == System.Net.HttpStatusCode.NoContent)
+            {
+                return _mailsAvailables;
+            }
+
+            return await result.Content.ReadFromJsonAsync<IEnumerable<EmailTypeViewModel>>()
+                ?? _mailsAvailables;
+        }
+        catch
+        {
+            Errors.Add("Erro durante coleta de e-mails.");
+            return _mailsAvailables;
+        }
+    }
+
     private void ClearAlerts()
     {
         Errors.Clear();
         Suc.Clear();
         Infos.Clear();
+    }
+
+    private void ChangeInputEmailConfig(ChangeEventArgs e, string role)
+    {
+        var addValue = e.Value as bool?;
+
+        if (!addValue.HasValue)
+        {
+            Errors.Add("Falha ao adicionar regra de e-mail usuário.");
+            return;
+        }
+
+        _createOrUpdateRoleEmailUserModel.Roles.Remove(role);
+
+        if (addValue.Value)
+            _createOrUpdateRoleEmailUserModel.Roles.Add(role);
     }
 }
