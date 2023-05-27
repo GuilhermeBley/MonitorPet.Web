@@ -53,13 +53,15 @@ public class EmailController : ControllerBase
     [HttpPatch]
     [Authorize]
     public async Task<ActionResult<IEnumerable<QueryRoleEmailUserViewModel>>> PatchFromUser(
-        CreateOrUpdateRoleEmailUserModel createOrUpdateRoleEmailUserModel,
+        CreateOrUpdateRoleEmailUserViewModel createOrUpdateRoleEmailUserModel,
         CancellationToken cancellationToken)
     {
         _ = await _contextClaim.GetRequiredCurrentClaim();
 
-        var emailsUserModified = await _emailUserService.CreateOrUpdate(createOrUpdateRoleEmailUserModel, cancellationToken: cancellationToken);
+        var model = _map.Map<CreateOrUpdateRoleEmailUserModel>(createOrUpdateRoleEmailUserModel);
 
-       return Ok(_map.Map<IEnumerable<QueryRoleEmailUserViewModel>>(emailsUserModified));
+        var emailsUserModified = await _emailUserService.CreateOrUpdate(model, cancellationToken: cancellationToken);
+
+        return Ok(_map.Map<IEnumerable<QueryRoleEmailUserViewModel>>(emailsUserModified));
     }
 }
