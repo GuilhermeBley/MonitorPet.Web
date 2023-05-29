@@ -5,7 +5,7 @@ CREATE TABLE `dosador` (
    `UltimaAtualizacao` datetime DEFAULT NULL,
    `UltimaLiberacao` varchar(45) DEFAULT NULL,
    PRIMARY KEY (`IdDosador`)
- ) ENGINE=InnoDB DEFAULT CHARSET=latin1
+ ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
  
  CREATE TABLE `agendamento` (
    `Id` bigint(20) NOT NULL AUTO_INCREMENT,
@@ -17,7 +17,7 @@ CREATE TABLE `dosador` (
    PRIMARY KEY (`Id`),
    KEY `Pk_agendamento_id` (`IdDosador`),
    CONSTRAINT `Fk_IdDosadorAgendamento_Dosador` FOREIGN KEY (`IdDosador`) REFERENCES `dosador` (`IdDosador`) ON DELETE NO ACTION ON UPDATE NO ACTION
- ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=latin1
+ ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=latin1;
  
  CREATE TABLE `historicopeso` (
    `Id` bigint(20) NOT NULL AUTO_INCREMENT,
@@ -27,7 +27,7 @@ CREATE TABLE `dosador` (
    PRIMARY KEY (`Id`),
    KEY `Fk_IdDosador_Dosador_idx` (`IdDosador`),
    CONSTRAINT `Fk_IdDosador_Dosador` FOREIGN KEY (`IdDosador`) REFERENCES `dosador` (`IdDosador`) ON DELETE NO ACTION ON UPDATE NO ACTION
- ) ENGINE=InnoDB AUTO_INCREMENT=320 DEFAULT CHARSET=latin1
+ ) ENGINE=InnoDB AUTO_INCREMENT=320 DEFAULT CHARSET=latin1;
  
  CREATE TABLE `usuario` (
    `IdUsuario` int(11) NOT NULL AUTO_INCREMENT,
@@ -42,7 +42,7 @@ CREATE TABLE `dosador` (
    `ContagemErros` int(11) DEFAULT NULL,
    PRIMARY KEY (`IdUsuario`),
    UNIQUE KEY `Login_UNIQUE` (`Login`)
- ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1
+ ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1;
  
  CREATE TABLE `dosadorusuario` (
    `Id` int(11) NOT NULL AUTO_INCREMENT,
@@ -54,7 +54,7 @@ CREATE TABLE `dosador` (
    KEY `Fk_Dosador_IdDosador_idx` (`IdDosador`),
    CONSTRAINT `Fk_Dosador_IdDosador` FOREIGN KEY (`IdDosador`) REFERENCES `dosador` (`IdDosador`) ON DELETE NO ACTION ON UPDATE NO ACTION,
    CONSTRAINT `Fk_User_User` FOREIGN KEY (`IdUsuario`) REFERENCES `usuario` (`IdUsuario`) ON DELETE NO ACTION ON UPDATE NO ACTION
- ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1
+ ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
  
  CREATE TABLE `regraemailuser` (
    `Id` int(11) NOT NULL AUTO_INCREMENT,
@@ -65,7 +65,7 @@ CREATE TABLE `dosador` (
    KEY `Fk_RoleEmailType_EmailType_idx` (`IdTipoEmail`),
    CONSTRAINT `Fk_RoleEmailType_EmailType` FOREIGN KEY (`IdTipoEmail`) REFERENCES `tipoemail` (`Id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
    CONSTRAINT `Fk_RoleEmailUser_User` FOREIGN KEY (`IdUsuario`) REFERENCES `usuario` (`IdUsuario`) ON DELETE NO ACTION ON UPDATE NO ACTION
- ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=latin1
+ ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
  
  CREATE TABLE `tipoemail` (
    `Id` int(11) NOT NULL AUTO_INCREMENT,
@@ -73,7 +73,7 @@ CREATE TABLE `dosador` (
    `Descricao` text,
    PRIMARY KEY (`Id`),
    UNIQUE KEY `TipoEnvio_UNIQUE` (`TipoEnvio`)
- ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1
+ ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 INSERT INTO monitorpet.tipoemail (TipoEnvio, Descricao) VALUES ('offline_pet', 'Aviso quando Pet está inativo.');
 INSERT INTO monitorpet.tipoemail (TipoEnvio, Descricao) VALUES ('sem_alimento', 'Aviso quando Pet está sem alimento.');
