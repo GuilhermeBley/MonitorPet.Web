@@ -1,4 +1,35 @@
-CREATE TABLE `usuario` (
+CREATE TABLE `dosador` (
+   `IdDosador` char(36) NOT NULL,
+   `Nome` varchar(255) NOT NULL,
+   `ImgUrl` varchar(255) DEFAULT NULL,
+   `UltimaAtualizacao` datetime DEFAULT NULL,
+   `UltimaLiberacao` varchar(45) DEFAULT NULL,
+   PRIMARY KEY (`IdDosador`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=latin1
+ 
+ CREATE TABLE `agendamento` (
+   `Id` bigint(20) NOT NULL AUTO_INCREMENT,
+   `IdDosador` char(36) NOT NULL,
+   `DiaSemana` int(11) NOT NULL,
+   `HoraAgendada` time NOT NULL,
+   `QtdeLiberadaGr` float(10,4) NOT NULL,
+   `Ativado` tinyint(4) NOT NULL,
+   PRIMARY KEY (`Id`),
+   KEY `Pk_agendamento_id` (`IdDosador`),
+   CONSTRAINT `Fk_IdDosadorAgendamento_Dosador` FOREIGN KEY (`IdDosador`) REFERENCES `dosador` (`IdDosador`) ON DELETE NO ACTION ON UPDATE NO ACTION
+ ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=latin1
+ 
+ CREATE TABLE `historicopeso` (
+   `Id` bigint(20) NOT NULL AUTO_INCREMENT,
+   `IdDosador` char(36) NOT NULL,
+   `PesoGr` float(10,4) NOT NULL,
+   `DateAt` datetime NOT NULL,
+   PRIMARY KEY (`Id`),
+   KEY `Fk_IdDosador_Dosador_idx` (`IdDosador`),
+   CONSTRAINT `Fk_IdDosador_Dosador` FOREIGN KEY (`IdDosador`) REFERENCES `dosador` (`IdDosador`) ON DELETE NO ACTION ON UPDATE NO ACTION
+ ) ENGINE=InnoDB AUTO_INCREMENT=320 DEFAULT CHARSET=latin1
+ 
+ CREATE TABLE `usuario` (
    `IdUsuario` int(11) NOT NULL AUTO_INCREMENT,
    `Nome` varchar(255) NOT NULL,
    `Apelido` varchar(255) NOT NULL,
@@ -11,17 +42,10 @@ CREATE TABLE `usuario` (
    `ContagemErros` int(11) DEFAULT NULL,
    PRIMARY KEY (`IdUsuario`),
    UNIQUE KEY `Login_UNIQUE` (`Login`)
- ) ENGINE=InnoDB DEFAULT CHARSET=latin1
-
-CREATE TABLE `dosador` (
-   `IdDosador` char(36) NOT NULL,
-   `Nome` varchar(255) NOT NULL,
-   `PesoMaxGr` float(7,4) DEFAULT NULL,
-   PRIMARY KEY (`IdDosador`)
- ) ENGINE=InnoDB DEFAULT CHARSET=latin1
-
-CREATE TABLE `dosadorusuario` (
-   `Id` int(11) NOT NULL,
+ ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=latin1
+ 
+ CREATE TABLE `dosadorusuario` (
+   `Id` int(11) NOT NULL AUTO_INCREMENT,
    `IdUsuario` int(11) NOT NULL,
    `IdDosador` char(36) NOT NULL,
    PRIMARY KEY (`Id`),
@@ -30,42 +54,28 @@ CREATE TABLE `dosadorusuario` (
    KEY `Fk_Dosador_IdDosador_idx` (`IdDosador`),
    CONSTRAINT `Fk_Dosador_IdDosador` FOREIGN KEY (`IdDosador`) REFERENCES `dosador` (`IdDosador`) ON DELETE NO ACTION ON UPDATE NO ACTION,
    CONSTRAINT `Fk_User_User` FOREIGN KEY (`IdUsuario`) REFERENCES `usuario` (`IdUsuario`) ON DELETE NO ACTION ON UPDATE NO ACTION
- ) ENGINE=InnoDB DEFAULT CHARSET=latin1
+ ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1
+ 
+ CREATE TABLE `regraemailuser` (
+   `Id` int(11) NOT NULL AUTO_INCREMENT,
+   `IdUsuario` int(11) NOT NULL,
+   `IdTipoEmail` int(11) NOT NULL,
+   PRIMARY KEY (`Id`),
+   UNIQUE KEY `IdUsuario_UNIQUE` (`IdUsuario`,`IdTipoEmail`),
+   KEY `Fk_RoleEmailType_EmailType_idx` (`IdTipoEmail`),
+   CONSTRAINT `Fk_RoleEmailType_EmailType` FOREIGN KEY (`IdTipoEmail`) REFERENCES `tipoemail` (`Id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+   CONSTRAINT `Fk_RoleEmailUser_User` FOREIGN KEY (`IdUsuario`) REFERENCES `usuario` (`IdUsuario`) ON DELETE NO ACTION ON UPDATE NO ACTION
+ ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=latin1
+ 
+ CREATE TABLE `tipoemail` (
+   `Id` int(11) NOT NULL AUTO_INCREMENT,
+   `TipoEnvio` varchar(50) NOT NULL,
+   `Descricao` text,
+   PRIMARY KEY (`Id`),
+   UNIQUE KEY `TipoEnvio_UNIQUE` (`TipoEnvio`)
+ ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1
 
-CREATE TABLE `Peso` (
-  `IdPeso` long auto_increment,
-  `IdDosador` char(36) not null,
-  `Peso` float(7,4) not null,
-  `DataRegistro` datetime not null,
-  PRIMARY KEY (`IdPeso`),
-  FOREIGN KEY (`IdDosador`) REFERENCES `Dosador`(`IdDosador`)
-);
+INSERT INTO monitorpet.tipoemail (TipoEnvio, Descricao) VALUES ('offline_pet', 'Aviso quando Pet está inativo.');
+INSERT INTO monitorpet.tipoemail (TipoEnvio, Descricao) VALUES ('sem_alimento', 'Aviso quando Pet está sem alimento.');
 
-CREATE TABLE `Agendamento` (
-  `IdAgendamento` int auto_increment,
-  `IdDosador` char(36) not null,
-  `DiaSemana` int,
-  `DataAgendada` datetime,
-  `QtdeLiberada` float(7,4) not null,
-  PRIMARY KEY (`IdAgendamento`),
-  FOREIGN KEY (`IdDosador`) REFERENCES `Dosador`(`IdDosador`)
-);
-
-CREATE TABLE `Endereço` (
-  `IdVeterinario` int not null,
-  `Logradouro` varchar(255),
-  `Numero` int,
-  `Cidade` varchar(255),
-  `Estado` varchar(255),
-  `Complemento` varchar(255),
-  PRIMARY KEY (`IdVeterinario`)
-);
-
-CREATE TABLE `Veterinário` (
-  `IdVeterinario` int auto_increment,
-  `IdDosador` char(36) not null,
-  `Nome` varchar(255) not null,
-  `Email` varchar(255),
-  `Celular` varchar(15),
-  PRIMARY KEY (`IdVeterinario`)
-);
+INSERT INTO monitorpet.dosador (IdDosador, Nome, ImgUrl) VALUES ('ea4fa600-9ba7-4f31-a073-4c38f3078568', 'Wendy', 'https://monitorpetsa.blob.core.windows.net/files/ea4fa600-9ba7-4f31-a073-4c38f3078568.jpg');
