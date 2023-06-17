@@ -43,6 +43,13 @@ public class DosadorService : IDosadorService
 
         using var transaction = await _uoW.BeginTransactionAsync();
 
+        bool dosadorExists = (await
+            _dosadorRepository.GetByIdOrDefault(idDosador))
+            is not null;
+
+        if (!dosadorExists)
+            throw new Core.Exceptions.NotFoundCoreException("Token inválido.");
+
         bool alreadyContainsDosador = (await
             _usuarioDosadorRepository.GetByIdUserAndIdDosador(idUser, idDosador))
             is not null;
