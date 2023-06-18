@@ -121,7 +121,7 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="@agendamento.Id" checked="@agendamento.Ativado"
                                @onchange="(async () => await ToggleActiveAgendamento(agendamento.Id))">
-                            <label class="schedule-time-label custom-control-label mx-2" for="@agendamento.Id"> @agendamento.HoraAgendada.ToString(@"hh\:mm") - @GetDaySummaryOfWeek(agendamento.DiaSemana)</label>
+                            <label class="schedule-time-label custom-control-label" for="@agendamento.Id"> @agendamento.HoraAgendada.ToString(@"hh\:mm") - @GetDaySummaryOfWeek(agendamento.DiaSemana)</label>
                         </div>
                         <div class="dropdown">
                             <button class="btn btn-outline-secondary rounded-0 h-100" type="button" data-toggle="dropdown" aria-expanded="false">
