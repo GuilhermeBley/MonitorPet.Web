@@ -190,6 +190,12 @@
             return;
         }
 
+        if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+        {
+            Dosadores = Enumerable.Empty<JoinUsuarioDosadorInfoViewModel>();
+            return;
+        }
+
         Dosadores = await response.Content.ReadFromJsonAsync<IEnumerable<JoinUsuarioDosadorInfoViewModel>>()
             ?? Enumerable.Empty<JoinUsuarioDosadorInfoViewModel>();
     }
@@ -340,6 +346,7 @@
                 return;
             }
 
+            await TrySetDosadores();
             SuccessMessages.Add("Dosador removido com sucesso.");
             _addDosadorViewModel.Token = string.Empty;
         }
