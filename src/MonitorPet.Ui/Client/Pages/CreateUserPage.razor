@@ -8,6 +8,7 @@
 
 <ErrorComponent Errors="Errors"></ErrorComponent>
 
+<PageTitle>Criar usuário</PageTitle>
 
 <div class="card-body">
     <div class="card shadow-sm p-3">
@@ -72,7 +73,7 @@
                 </div>
             </EditForm>
         }
-        @if (UserCreated)
+        else
         {
             <p>Criação de conta realizada! Próximo passo é a confirmação do e-mail.</p>
             <p>Verifique o e-mail '@UserModelToCreate.Email' para ativar conta.</p>
@@ -99,7 +100,7 @@
 
             var errorMessage = await resultCreateUser.TryGetErrors();
 
-            if (errorMessage is not null)
+            if (errorMessage.ContainsError)
             {
                 ResultMessage = StateMessage.None;
                 Errors.AddRange(errorMessage.ErrorsMessages);
@@ -114,5 +115,6 @@
         }
 
         ResultMessage = StateMessage.Sent;
+        UserCreated = true;
     }
 }
