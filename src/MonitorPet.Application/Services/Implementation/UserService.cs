@@ -244,12 +244,14 @@ public class UserService : IUserService
         Core.Entity.User.ThrowIfIsInvalidPassword(newPassword);
 
         using var transaction = await _uoW.BeginTransactionAsync();
-
+        
         var userToChangePassword =
             await _userRepository.GetByIdOrDefault(idUser)
             ?? throw new Core.Exceptions.NotFoundCoreException("Usuário não encontrado.");
 
-        if (userToChangePassword.Password != oldPassword)
+        var isValidOldPassword = Security.Internal.InternalHash.IsValidPassword(oldPassword, userToChangePassword.PasswordHash, userToChangePassword.PasswordSalt);
+
+        if (!isValidOldPassword)
             throw new Core.Exceptions.CommonCoreException("Senha antiga não confere.");
 
         var userEntity = CreateUpdateUserWithPassword(userToChangePassword, newPassword);
@@ -323,7 +325,7 @@ public class UserService : IUserService
                 User.MIN_COUNT_ACCESS_FAILED,
                 userModel.Name,
                 userModel.NickName,
-                userModel.Password,
+                newPassword,
                 hashedPassword.HashBase64,
                 hashedPassword.Salt
             );
