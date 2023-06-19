@@ -378,7 +378,7 @@
         if (dosador.LastSeen is null)
             return true;
 
-        if (dosador.LastSeen.Value.AddDays(2) > DateTime.UtcNow)
+        if (dosador.LastSeen.Value.AddDays(2) < DateTime.UtcNow)
             return true;
 
         return false;
